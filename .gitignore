@@ -1,0 +1,23 @@
+# Environment variables — never commit these
+.env
+
+# Calibration output
+calibration_debug.png
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Local Database
+loot_tracker.db
+
+dist
+.idea
+build/
+bdoLootTracker.iml
+main.spec
+.claude
+
+# Svelte
+ui/node_modules/

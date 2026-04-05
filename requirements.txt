@@ -1,0 +1,15 @@
+# BDO Loot Tracker – Python dependencies
+# Install with:  pip install -r requirements.txt
+#
+# Also install the Tesseract binary (free, ~30MB):
+#   https://github.com/UB-Mannheim/tesseract/wiki
+# The default install path (C:\Program Files\Tesseract-OCR\tesseract.exe)
+# is picked up automatically by pytesseract.
+
+mss>=9.0.1          # fast cross-platform screen capture
+Pillow>=10.0.0      # image processing
+pystray>=0.19.5     # system tray icon
+requests>=2.31.0    # HTTP uploads to Supabase
+pytesseract>=0.3.10 # Tesseract OCR bindings
+python-dotenv>=1.0.1 # load local .env configuration
+pywebview>=5.0       # native desktop window host for local UI
