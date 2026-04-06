@@ -4,7 +4,7 @@ A real-time loot tracking overlay for **Black Desert Online**. It watches your l
 
 ---
 
-Download the latest version [here](https://github.com/janhnguyen/BDO-Loot-Tracker/releases/tag/v0.1.0-alpha).
+Download the latest version [here](https://github.com/janhnguyen/BDO-Loot-Tracker/releases).
 
 ### Dependencies
 
