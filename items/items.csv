@@ -1,4 +1,4 @@
-name,value,zone,dehkia_two
+name,value,zone,dehkia_two,tf
 --- Trash Loot ---,,,
 Aakman's Guardian Token,13120,Aakman,
 Tainted Aakman's Token,32900,[Dekhia] Aakman,
@@ -52,7 +52,7 @@ Bunch of Loose Mane Hair,550,Manes Hideout,
 Corrupt Crystal,7500,Mansha Forest,
 Narc Magic Mark,12770,Manshaum Forest,
 Degraded Wood Fragment,18200,Mirumok Ruins,
-Tainted Wood Fragment,101500,[Dehkia] Mirumok Ruins,
+Tainted Wood Fragment,101500,[Dehkia] Mirumok Ruins,[Dehkia] Mirumok Ruins
 Decomposed Exocrine Gland,11980,Murrowak's Labyrinth,
 Gazelle Fur,220,Navarn Steppe,
 Griffon Beak,21150,Navarn Steppe,
@@ -237,12 +237,12 @@ Radiant Sycraia's Memory,0,,
 Sycrid's Scale Piece,0,,
 Silver,1,,
 --- Dehkia II ---
-Dehkia's Artifact - All Evasion,9350000000,,TRUE
-Dehkia's Artifact - All Damage Reduction,9350000000,,TRUE
-Crystal of Unyielding Spirit,108000000,,TRUE
-Crystal of Dogged Patience,108000000,,TRUE
-Crystal of Stalwart Fortitude,471000000,,TRUE
-Crystal of Precise Destruction,108000000,,TRUE
+Dehkia's Artifact - All Evasion,9350000000,,,TRUE
+Dehkia's Artifact - All Damage Reduction,9350000000,,,TRUE
+Crystal of Unyielding Spirit,108000000,,,TRUE
+Crystal of Dogged Patience,108000000,,,TRUE
+Crystal of Stalwart Fortitude,471000000,,,TRUE
+Crystal of Precise Destruction,108000000,,,TRUE
 Dehkia's Fragment,93500000,,TRUE
 --- Treasure Item Pieces ---
 Lafi Bedmountain's Upgraded Telescope Parts,0,,

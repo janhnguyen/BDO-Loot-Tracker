@@ -16,8 +16,9 @@ Control Panel → Edit the system environment variables → Advanced → Environ
 
 ## Features
 
-- **Live loot log** - timestamped entries appear as items are detected
-- **Local storage** - events are saved to a local SQLite database by session
+- **Live loot log**     - timestamped entries appear as items are detected
+- **Local storage**     - events are saved to a local database by session
+- **Zone detection**    - zones are automatically displayed
 
 ## Calibration
 

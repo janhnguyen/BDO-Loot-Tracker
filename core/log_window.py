@@ -39,6 +39,12 @@ class LogWindow:
         set_tracking_window_cb=None,
         get_font_size_cb=None,
         set_font_size_cb=None,
+        get_db_stats_cb=None,
+        show_ocr_pane_default: bool = False,
+        ocr_pane_settings_changed_cb=None,
+        pause_cb=None,
+        resume_cb=None,
+        is_paused_cb=None,
     ):
         self.get_status_cb = get_status_cb
         self.start_cb = start_cb
@@ -51,8 +57,17 @@ class LogWindow:
         self.set_tracking_window_cb = set_tracking_window_cb
         self.get_font_size_cb = get_font_size_cb
         self.set_font_size_cb = set_font_size_cb
+        self.get_db_stats_cb = get_db_stats_cb
+        self.ocr_pane_settings_changed_cb = ocr_pane_settings_changed_cb
+        self.pause_cb = pause_cb
+        self.resume_cb = resume_cb
+        self.is_paused_cb = is_paused_cb
 
         self.show_ocr = show_ocr_default
+        self.show_ocr_pane = show_ocr_pane_default
+
+        self._ocr_frame_raw: bytes | None = None
+        self._ocr_frame_processed: bytes | None = None
 
         self._lock = threading.Lock()
         self._totals: dict[str, int] = {}
@@ -78,7 +93,7 @@ class LogWindow:
             self._totals[event.item_name] = self._totals.get(event.item_name, 0) + event.quantity
 
     def add_raw_ocr(self, text):
-        if not self.show_ocr:
+        if not self.show_ocr and not self.show_ocr_pane:
             return
         ts = datetime.now(timezone.utc).strftime("%H:%M:%S")
         preview = " ↵ ".join(ln for ln in text.strip().splitlines() if ln.strip())
@@ -88,8 +103,17 @@ class LogWindow:
             self._logs.append(f"[{ts}] [OCR] {preview}")
             self._logs = self._logs[-400:]
 
-    def add_ocr_frame(self, img):
-        return
+    def add_ocr_frame(self, raw_img, processed_img):
+        if not self.show_ocr_pane:
+            return
+        import io
+        buf_raw = io.BytesIO()
+        raw_img.save(buf_raw, format="PNG")
+        buf_proc = io.BytesIO()
+        processed_img.save(buf_proc, format="PNG")
+        with self._lock:
+            self._ocr_frame_raw = buf_raw.getvalue()
+            self._ocr_frame_processed = buf_proc.getvalue()
 
     def _append_system(self, text: str):
         ts = datetime.now(timezone.utc).strftime("%H:%M:%S")
@@ -109,27 +133,18 @@ class LogWindow:
             self._timer_started_at = time.monotonic()
             self._timer_elapsed_seconds = 0.0
 
-    def stop_timer(self) -> float:
+    def pause_timer(self):
         with self._lock:
             if self._timer_started_at is not None:
                 self._timer_elapsed_seconds = max(
                     0.0, time.monotonic() - self._timer_started_at
                 )
-            self._timer_started_at = None
-            return self._timer_elapsed_seconds
+                self._timer_started_at = None
 
-    @staticmethod
-    def _format_duration(seconds: float) -> str:
-        total_seconds = int(max(0.0, seconds))
-        hours = total_seconds // 3600
-        minutes = (total_seconds % 3600) // 60
-        secs = total_seconds % 60
-        return f"{hours:02d}:{minutes:02d}:{secs:02d}"
-
-    def start_timer(self):
+    def resume_timer(self):
         with self._lock:
-            self._timer_started_at = time.monotonic()
-            self._timer_elapsed_seconds = 0.0
+            if self._timer_started_at is None:
+                self._timer_started_at = time.monotonic() - self._timer_elapsed_seconds
 
     def stop_timer(self) -> float:
         with self._lock:
@@ -210,12 +225,14 @@ class LogWindow:
             timer_display = self._format_duration(timer_seconds)
             return {
                 "running": running,
+                "paused": self.is_paused_cb() if self.is_paused_cb else False,
                 "zone": zone,
                 "timer": timer_display,
                 "timer_seconds": timer_seconds,
                 "logs": self._logs[-250:],
                 "totals": [{"name": name, "qty": qty} for name, qty in totals],
                 "show_ocr": self.show_ocr,
+                "show_ocr_pane": self.show_ocr_pane,
                 "tracking_window_size": self.get_tracking_window_cb() if self.get_tracking_window_cb else 20,
                 "items_font_size": self.get_font_size_cb() if self.get_font_size_cb else 12,
                 "sessions": sessions,
@@ -225,6 +242,10 @@ class LogWindow:
     def _handle_action(self, action: str, body: dict[str, Any]):
         if action == "start" and self.start_cb:
             self.start_cb()
+        elif action == "pause" and self.pause_cb:
+            self.pause_cb()
+        elif action == "resume" and self.resume_cb:
+            self.resume_cb()
         elif action == "stop" and self.stop_cb:
             self.stop_cb()
         elif action == "calibrate" and self.calibrate_cb:
@@ -240,6 +261,10 @@ class LogWindow:
         elif action == "toggle_ocr":
             self.show_ocr = bool(body.get("value", False))
             self._persist_ocr_settings()
+        elif action == "toggle_ocr_pane":
+            self.show_ocr_pane = bool(body.get("value", False))
+            if self.ocr_pane_settings_changed_cb:
+                self.ocr_pane_settings_changed_cb(self.show_ocr_pane)
         elif action == "set_tracking_window" and self.set_tracking_window_cb:
             self.set_tracking_window_cb(body.get("value", 20))
         elif action == "set_font_size" and self.set_font_size_cb:
@@ -268,6 +293,26 @@ class LogWindow:
                 if self.path == "/api/changelog":
                     text = _CHANGELOG_PATH.read_text(encoding="utf-8") if _CHANGELOG_PATH.exists() else ""
                     self._write_json({"text": text})
+                    return
+
+                if self.path.startswith("/api/ocr_frame"):
+                    frame_type = "raw" if "type=raw" in self.path else "processed"
+                    with log_window._lock:
+                        data = log_window._ocr_frame_raw if frame_type == "raw" else log_window._ocr_frame_processed
+                    if data:
+                        self.send_response(HTTPStatus.OK)
+                        self.send_header("Content-Type", "image/png")
+                        self.send_header("Content-Length", str(len(data)))
+                        self.send_header("Cache-Control", "no-store")
+                        self.end_headers()
+                        self.wfile.write(data)
+                    else:
+                        self.send_error(HTTPStatus.NOT_FOUND)
+                    return
+
+                if self.path == "/api/db_stats":
+                    stats = log_window.get_db_stats_cb() if log_window.get_db_stats_cb else {}
+                    self._write_json(stats)
                     return
 
                 target = self.path.split("?", 1)[0]
