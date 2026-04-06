@@ -1,6 +1,5 @@
 import threading
 import time
-from collections import Counter, deque
 
 import mss
 import pytesseract
@@ -22,21 +21,25 @@ from .config import (
 _WINDOW_MIN = 15
 _WINDOW_MAX = 30
 
+# Scroll detection: maximum per-pixel mean diff (0-255) to accept a shift match.
+_SCROLL_MATCH_THRESHOLD = 25
+# Maximum scroll to check in pixels (full-res). Covers many simultaneous drops.
+_MAX_SCROLL_PX = 300
+
+
 class Tracker:
-    def __init__(self, on_event, on_ocr):
+    def __init__(self, on_event, on_ocr, on_ocr_frame=None):
         self._running = False
         self._thread = None
         self._zone = "Unknown"
 
         self._on_event = on_event
         self._on_ocr = on_ocr
+        self._on_ocr_frame = on_ocr_frame
 
         self._tracking_window_size: int = max(_WINDOW_MIN, min(_WINDOW_MAX, TRACKING_WINDOW_SIZE))
-
-        # Tracks the visible FIFO window of loot entries (top -> bottom).
-        self._prev_window: list[tuple[str, int]] = []
         self._suppress_events_until = 0.0
-        self._seen_windows = deque(maxlen=200)
+        self._paused = False
         self._current_batch_overrides: dict[str, str] = {}
 
     def set_zone(self, zone):
@@ -57,50 +60,73 @@ class Tracker:
     def is_running(self):
         return self._running
 
+    def is_paused(self):
+        return self._paused
+
     def start(self):
         if self._running:
             return
-        # Start a new tracking session with a short warmup period to let the
-        # OCR settle on the existing on-screen log before counting new drops.
-        self._prev_window = []
+        self._paused = False
         self._suppress_events_until = time.monotonic() + SESSION_RESET_DELAY_SECONDS
-        self._seen_windows.clear()
         self._running = True
         self._thread = threading.Thread(target=self._loop, daemon=True)
         self._thread.start()
 
+    def pause(self):
+        self._paused = True
+
+    def resume(self):
+        self._paused = False
+        # Re-suppress briefly so the settled frame after un-pause isn't counted.
+        self._suppress_events_until = time.monotonic() + SESSION_RESET_DELAY_SECONDS
+
     def stop(self):
+        self._paused = False
         self._running = False
 
     def get_session_reset_delay(self) -> float:
         return SESSION_RESET_DELAY_SECONDS
 
     @staticmethod
-    def _detect_new_entries(prev_window: list[tuple[str, int]], curr_window: list[tuple[str, int]]) -> list[tuple[str, int]]:
+    def _detect_scroll_shift(prev: Image.Image, curr: Image.Image) -> int:
         """
-        Compare two FIFO snapshots and return only entries newly appended to the
-        bottom of the current window.
-        """
-        max_overlap = min(len(prev_window), len(curr_window))
-        overlap = 0
-        for k in range(max_overlap, 0, -1):
-            if prev_window[-k:] == curr_window[:k]:
-                overlap = k
-                break
-        if overlap > 0 or not prev_window:
-            return curr_window[overlap:]
+        Find how many pixels curr has scrolled up relative to prev.
 
-        # Fallback for OCR jitter: if no reliable FIFO overlap is found, avoid
-        # replaying the entire visible window. Emit only occurrences that are
-        # above the previous frame's item multiset.
-        prev_counts = Counter(prev_window)
-        new_entries: list[tuple[str, int]] = []
-        for entry in curr_window:
-            if prev_counts[entry] > 0:
-                prev_counts[entry] -= 1
-            else:
-                new_entries.append(entry)
-        return new_entries
+        Works at 1/8 scale on the preprocessed (grayscale) frames.
+        First computes the s=0 baseline diff (direct frame comparison).
+        If the frames are nearly identical there is no scroll → return 0.
+        Otherwise tries each candidate upward shift s; accepts the best only
+        if its overlap score is both below the noise threshold AND meaningfully
+        better than the s=0 baseline (i.e. the shift actually explains the diff).
+        """
+        w, h = prev.size
+        tw, th = max(4, w // 8), max(4, h // 8)
+        max_s = min(th // 2, max(1, _MAX_SCROLL_PX // 8))
+
+        a = list(prev.resize((tw, th), Image.BOX).getdata())
+        b = list(curr.resize((tw, th), Image.BOX).getdata())
+        n_total = tw * th
+
+        # Baseline: direct frame comparison (s=0). If nearly identical, no scroll.
+        score_0 = sum(abs(av - bv) for av, bv in zip(a, b)) / n_total
+        if score_0 < 2:
+            return 0
+
+        best_s, best_score = 0, float('inf')
+        for s in range(1, max_s + 1):
+            overlap = th - s
+            n = overlap * tw
+            a_part = a[s * tw : (s + overlap) * tw]
+            b_part = b[:n]
+            score = sum(abs(av - bv) for av, bv in zip(a_part, b_part)) / n
+            if score < best_score:
+                best_score = score
+                best_s = s
+
+        # Reject if the shift doesn't explain the change better than no shift.
+        if best_score > _SCROLL_MATCH_THRESHOLD or best_score >= score_0:
+            return 0
+        return best_s * 8
 
     def _capture(self):
         with mss.mss() as sct:
@@ -121,12 +147,9 @@ class Tracker:
 
     def _preprocess_for_ocr(self, pil_img: Image.Image) -> Image.Image:
         """
-        Isolate white text by requiring pixels to be both bright AND unsaturated
-        (R ≈ G ≈ B).  Bright-but-coloured pixels (grass, path) are rejected.
+        Isolate bright text (white, orange, gold, yellow) against the dark
+        acquisition log background. Uses peak channel so coloured text is kept.
         """
-        # Capture any text (white, orange, gold, yellow) against the dark
-        # acquisition log background. Using peak channel instead of requiring
-        # all channels to be bright, so coloured text isn't filtered out.
         BRIGHT_MIN = 135
 
         rgb  = pil_img.convert("RGB")
@@ -145,44 +168,53 @@ class Tracker:
         return out
 
     def _loop(self):
+        prev_processed: Image.Image | None = None
+
         while self._running:
+            if self._paused:
+                time.sleep(0.1)
+                continue
             try:
                 img = self._capture()
                 processed_img = self._preprocess_for_ocr(img)
-                text = pytesseract.image_to_string(processed_img, config="--psm 6")
 
-                if text.strip():
-                    self._on_ocr(text)
+                if self._on_ocr_frame:
+                    self._on_ocr_frame(img, processed_img)
 
-                drops = parse_loot(text)
+                if prev_processed is None:
+                    prev_processed = processed_img
+                    time.sleep(POLL_INTERVAL)
+                    continue
 
-                # OCR lines are top->bottom. Keep only the newest entries from
-                # the visible FIFO region to reduce duplicate recounts.
-                curr_window = drops[-self._tracking_window_size:]
-                window_key = tuple(curr_window)
+                shift_px = self._detect_scroll_shift(prev_processed, processed_img)
 
-                if time.monotonic() >= self._suppress_events_until:
-                    if window_key and window_key in self._seen_windows:
-                        new_entries = []
-                    else:
-                        new_entries = self._detect_new_entries(self._prev_window, curr_window)
+                # Always OCR the full frame for the raw debug log.
+                full_text = pytesseract.image_to_string(processed_img, config="--psm 6")
+                if full_text.strip():
+                    self._on_ocr(full_text)
 
-                    self._current_batch_overrides = resolve_batch_zone_overrides(
-                        [k[0] for k in new_entries]
-                    )
+                # Require the new strip to be at least one text-line tall (~20px).
+                if shift_px >= 20 and time.monotonic() >= self._suppress_events_until:
+                    # Crop only the newly scrolled-in content at the bottom.
+                    pw, ph = processed_img.size
+                    new_strip = processed_img.crop((0, ph - shift_px, pw, ph))
+                    text = pytesseract.image_to_string(new_strip, config="--psm 6")
 
-                    for key in new_entries:
-                        self._on_event(LootEvent(
-                            item_name=key[0],
-                            quantity=key[1],
-                            zone=self._zone,
-                            raw_text=text[:500],
-                            character=CHARACTER_NAME,
-                        ))
+                    drops = parse_loot(text)
+                    if drops:
+                        self._current_batch_overrides = resolve_batch_zone_overrides(
+                            [d[0] for d in drops]
+                        )
+                        for item_name, qty in drops:
+                            self._on_event(LootEvent(
+                                item_name=item_name,
+                                quantity=qty,
+                                zone=self._zone,
+                                raw_text=text[:500],
+                                character=CHARACTER_NAME,
+                            ))
 
-                if window_key:
-                    self._seen_windows.append(window_key)
-                    self._prev_window = curr_window
+                prev_processed = processed_img
 
             except Exception as e:
                 print("Error:", e)

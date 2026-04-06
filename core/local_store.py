@@ -260,6 +260,90 @@ class LocalStore:
         rows = self.get_unuploaded_events(session_id)
         return len(rows)
 
+    def get_db_stats(self) -> dict:
+        with self._connect() as conn:
+            summary = conn.execute(
+                """
+                select
+                    count(*) as total_sessions,
+                    max(avg_hour) as best_avg_hour,
+                    (select zone from sessions order by avg_hour desc limit 1) as best_zone
+                from sessions
+                """
+            ).fetchone()
+
+            totals = conn.execute(
+                """
+                select
+                    coalesce(sum(quantity), 0) as total_items,
+                    coalesce(sum(value), 0) as total_silver
+                from loot_events_local
+                """
+            ).fetchone()
+
+            session_rows = conn.execute(
+                """
+                select
+                    s.id,
+                    s.started_at,
+                    s.ended_at,
+                    s.duration,
+                    s.zone,
+                    s.avg_hour,
+                    coalesce(sum(e.value), 0) as total_silver,
+                    count(distinct e.item_name) as item_count
+                from sessions s
+                left join loot_events_local e on e.session_id = s.id
+                group by s.id
+                order by s.id desc
+                limit 50
+                """
+            ).fetchall()
+
+            top_item_rows = conn.execute(
+                """
+                select
+                    item_name,
+                    sum(quantity) as total_qty,
+                    sum(value) as total_silver
+                from loot_events_local
+                group by item_name
+                order by total_qty desc
+                limit 10
+                """
+            ).fetchall()
+
+        return {
+            "summary": {
+                "total_sessions": int(summary["total_sessions"]),
+                "total_items": int(totals["total_items"]),
+                "total_silver": float(totals["total_silver"]),
+                "best_avg_hour": float(summary["best_avg_hour"] or 0.0),
+                "best_zone": summary["best_zone"] or "—",
+            },
+            "sessions": [
+                {
+                    "id": int(row["id"]),
+                    "started_at": row["started_at"],
+                    "ended_at": row["ended_at"],
+                    "duration": row["duration"],
+                    "zone": row["zone"],
+                    "avg_hour": float(row["avg_hour"] or 0.0),
+                    "total_silver": float(row["total_silver"]),
+                    "item_count": int(row["item_count"]),
+                }
+                for row in session_rows
+            ],
+            "top_items": [
+                {
+                    "item_name": row["item_name"],
+                    "total_qty": int(row["total_qty"]),
+                    "total_silver": float(row["total_silver"]),
+                }
+                for row in top_item_rows
+            ],
+        }
+
     def _ensure_sessions_table(self, conn: sqlite3.Connection):
         columns = {
             row["name"]

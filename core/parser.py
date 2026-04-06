@@ -19,7 +19,8 @@ def _load_csv_items(
     names: list[str],
     values: dict[str, float],
     zones: dict[str, str],
-    dehkia_two: dict[str, str],
+    dehkia_two_tf: dict[str, bool],
+    dehkia_zone_upgrade: dict[str, str],
     values_by_zone: dict[tuple[str, str], float],
     allow_overwrite: bool,
 ):
@@ -29,6 +30,7 @@ def _load_csv_items(
     with csv_path.open(newline="", encoding="utf-8-sig") as csv_file:
         reader = csv.reader(csv_file)
         for row in reader:
+
             if len(row) < 2:
                 continue
 
@@ -36,6 +38,8 @@ def _load_csv_items(
             value_raw = row[1].strip()
             zone_raw = row[2].strip() if len(row) > 2 else ""
             dehkia_two_raw = row[3].strip() if len(row) > 3 else ""
+            tf_raw = row[4].strip() if len(row) > 4 else ""
+
             if not name:
                 continue
 
@@ -54,12 +58,19 @@ def _load_csv_items(
 
             if allow_overwrite or name not in values:
                 values[name] = parsed_value
+
             if zone_raw and (allow_overwrite or name not in zones):
                 zones[name] = zone_raw
-            # Only treat col 4 as a Dehkia II zone if it actually contains "[Dehkia II]".
-            # Empty col 4 means no Dehkia II variant; "TRUE" and other values are not zones.
-            if "[Dehkia II]" in dehkia_two_raw and (allow_overwrite or name not in dehkia_two):
-                dehkia_two[name] = dehkia_two_raw
+
+            # tf=TRUE marks a Dehkia II exclusive indicator item
+            if tf_raw.upper() == "TRUE" and (allow_overwrite or name not in dehkia_two_tf):
+                dehkia_two_tf[name] = True
+
+            # Build zone upgrade map: [Dehkia] X → [Dehkia II] X from trash loot rows
+            if zone_raw.startswith("[Dehkia]") and "[Dehkia II]" in dehkia_two_raw:
+                if allow_overwrite or zone_raw not in dehkia_zone_upgrade:
+                    dehkia_zone_upgrade[zone_raw] = dehkia_two_raw
+                
             # Zone-specific value lookup for items that appear in multiple zones
             if zone_raw and parsed_value:
                 values_by_zone[(name, zone_raw)] = parsed_value
@@ -68,19 +79,20 @@ def load_items():
     names: list[str] = []
     values: dict[str, float] = {}
     zones: dict[str, str] = {}
-    dehkia_two: dict[str, str] = {}
+    dehkia_two_tf: dict[str, bool] = {}
+    dehkia_zone_upgrade: dict[str, str] = {}
     values_by_zone: dict[tuple[str, str], float] = {}
-    _load_csv_items(_ITEMS_CSV_FILE, names, values, zones, dehkia_two, values_by_zone, allow_overwrite=True)
+    _load_csv_items(_ITEMS_CSV_FILE, names, values, zones, dehkia_two_tf, dehkia_zone_upgrade, values_by_zone, allow_overwrite=True)
 
     for arsha_file in _ITEMS_ARSHA_CANDIDATES:
-        _load_csv_items(arsha_file, names, values, zones, dehkia_two, values_by_zone, allow_overwrite=False)
+        _load_csv_items(arsha_file, names, values, zones, dehkia_two_tf, dehkia_zone_upgrade, values_by_zone, allow_overwrite=False)
         if arsha_file.exists():
             break
 
     names.sort(key=len, reverse=True)
-    return names, values, zones, dehkia_two, values_by_zone
+    return names, values, zones, dehkia_two_tf, dehkia_zone_upgrade, values_by_zone
 
-ITEM_NAMES, ITEM_VALUES, ITEM_ZONES, ITEM_DEHKIA_TWO, ITEM_VALUES_BY_ZONE = load_items()
+ITEM_NAMES, ITEM_VALUES, ITEM_ZONES, ITEM_DEHKIA_TWO_TF, DEHKIA_ZONE_UPGRADE, ITEM_VALUES_BY_ZONE = load_items()
 
 def get_item_value(item_name: str) -> float:
     return ITEM_VALUES.get(item_name, 0.0)
@@ -92,11 +104,15 @@ def get_item_value_for_zone(item_name: str, zone: str) -> float:
 def get_item_zone(item_name: str) -> str | None:
     return ITEM_ZONES.get(item_name)
 
-def get_item_dehkia_two_zone(item_name: str) -> str | None:
-    """Return the Dehkia II zone for an item if col 4 contains a [Dehkia II] zone string."""
-    return ITEM_DEHKIA_TWO.get(item_name)
+def is_dehkia_two_indicator(item_name: str) -> bool:
+    """Return True if the item has tf=TRUE (Dehkia II exclusive drop)."""
+    return ITEM_DEHKIA_TWO_TF.get(item_name, False)
 
-# ── Batch context zone resolution ─────────────────────────────────────────────
+def get_dehkia_two_upgrade(current_zone: str) -> str | None:
+    """If current_zone is a [Dehkia] zone with a known [Dehkia II] upgrade, return it."""
+    return DEHKIA_ZONE_UPGRADE.get(current_zone)
+
+# Batch context zone resolution
 
 _HUGE_SPEAR = "Huge Spear"
 _CORRUPT_CRYSTAL = "Corrupt Crystal"
@@ -128,7 +144,7 @@ def resolve_batch_zone_overrides(item_names: list[str]) -> dict[str, str]:
 
     return overrides
 
-# ── Loot parser ───────────────────────────────────────────────────────────────
+# Loot parser
 
 def _norm_digits(s: str) -> str:
     return (s.replace('|', '1').replace('!', '1').replace('l', '1')
@@ -136,19 +152,16 @@ def _norm_digits(s: str) -> str:
              .replace('O', '0').replace('o', '0'))
 
 def parse_loot(text: str):
-    """
-    Expected line format: You have obtained ● [Item Name] xN
-    Lines without both '[' and ']' are skipped — they cannot contain valid items.
-    """
+    # Expected line format: You have obtained ● [Item Name] xN
     results = []
     for line in text.splitlines():
         line = line.strip()
         if not line:
             continue
-        # Require brackets — items in the loot log are always wrapped in [...]
         if '[' not in line or ']' not in line:
             continue
         line_stripped = re.sub(r'\bevent\b', '', line.replace("[", "").replace("]", ""), flags=re.IGNORECASE).strip()
+        line_stripped = line_stripped.replace('\u2019', "'").replace('\u2018', "'").replace('`', "'")
         line_lc = line_stripped.lower()
         for name in ITEM_NAMES:
             idx = line_lc.find(name.lower())
@@ -166,7 +179,7 @@ def parse_loot(text: str):
                 except Exception:
                     pass
             else:
-                # No quantity present — treat as x1 (e.g. Life Spirit Stone, event items)
+                # No quantity present treat as x1
                 results.append((name, 1))
                 break
     return results
