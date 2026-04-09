@@ -10,6 +10,8 @@
     show_ocr: false,
     sessions: ['No sessions'],
     selected_session: 'No sessions',
+    show_live_log: true,
+    light_mode: false,
   };
 
   let sidebarOpen = false;
@@ -274,7 +276,7 @@
         </div>
 
         <div class="settings-group">
-          <h3>OCR</h3>
+          <h3>Live Log</h3>
           <label class="toggle-row">
             <input
               type="checkbox"
@@ -290,6 +292,25 @@
               on:change={(e) => api('toggle_ocr_pane', 'POST', { value: e.currentTarget.checked })}
             />
             <span>Show Live OCR image</span>
+          </label>
+          <label class="toggle-row">
+            <input
+              type="checkbox"
+              checked={state.show_live_log}
+              on:change={(e) => api('toggle_live_log', 'POST', { value: e.currentTarget.checked })}
+            >
+            <span>Show Live Log</span>
+          </label>
+        </div>
+
+        <div class="settings-group">
+          <h3>Personalization</h3>
+          <label class="toggle-row">
+            <input
+              type="checkbox"
+              checked={state.light_mode}
+            >
+            <span>Light Mode</span>
           </label>
         </div>
 
@@ -329,10 +350,12 @@
       on:mouseleave={stopDrag}
     >
       <div class="panes-top" style="flex: 1; min-height: 0; display: flex;">
-        <article style="width: {leftPct}%; min-width: 0;">
-          <h2>LIVE LOG</h2>
-          <pre style="font-size: {state.items_font_size ?? 12}px">{(state.show_ocr ? state.logs : state.logs.filter(l => !l.includes('[OCR]'))).join('\n')}</pre>
-        </article>
+        {#if state.show_live_log}
+          <article style="width: {leftPct}%; min-width: 0;">
+            <h2>LIVE LOG</h2>
+            <pre style="font-size: {state.items_font_size ?? 12}px">{(state.show_ocr ? state.logs : state.logs.filter(l => !l.includes('[OCR]'))).join('\n')}</pre>
+          </article>
+        {/if}
 
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div class="drag-handle-h" on:mousedown={startDragH}></div>

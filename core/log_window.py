@@ -41,7 +41,9 @@ class LogWindow:
         set_font_size_cb=None,
         get_db_stats_cb=None,
         show_ocr_pane_default: bool = False,
+        show_live_log_default: bool = True,
         ocr_pane_settings_changed_cb=None,
+        live_log_settings_changed_cb=None,
         pause_cb=None,
         resume_cb=None,
         is_paused_cb=None,
@@ -59,12 +61,14 @@ class LogWindow:
         self.set_font_size_cb = set_font_size_cb
         self.get_db_stats_cb = get_db_stats_cb
         self.ocr_pane_settings_changed_cb = ocr_pane_settings_changed_cb
+        self.live_log_settings_changed_cb = live_log_settings_changed_cb
         self.pause_cb = pause_cb
         self.resume_cb = resume_cb
         self.is_paused_cb = is_paused_cb
 
         self.show_ocr = show_ocr_default
         self.show_ocr_pane = show_ocr_pane_default
+        self.show_live_log = show_live_log_default
 
         self._ocr_frame_raw: bytes | None = None
         self._ocr_frame_processed: bytes | None = None
@@ -233,6 +237,7 @@ class LogWindow:
                 "totals": [{"name": name, "qty": qty} for name, qty in totals],
                 "show_ocr": self.show_ocr,
                 "show_ocr_pane": self.show_ocr_pane,
+                "show_live_log": self.show_live_log,
                 "tracking_window_size": self.get_tracking_window_cb() if self.get_tracking_window_cb else 20,
                 "items_font_size": self.get_font_size_cb() if self.get_font_size_cb else 12,
                 "sessions": sessions,
@@ -265,6 +270,10 @@ class LogWindow:
             self.show_ocr_pane = bool(body.get("value", False))
             if self.ocr_pane_settings_changed_cb:
                 self.ocr_pane_settings_changed_cb(self.show_ocr_pane)
+        elif action == "toggle_live_log":
+            self.show_live_log = bool(body.get("value", False))
+            if self.live_log_settings_changed_cb:
+                self.live_log_settings_changed_cb(self.show_live_log)
         elif action == "set_tracking_window" and self.set_tracking_window_cb:
             self.set_tracking_window_cb(body.get("value", 20))
         elif action == "set_font_size" and self.set_font_size_cb:
