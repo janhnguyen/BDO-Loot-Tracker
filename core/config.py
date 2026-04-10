@@ -17,6 +17,7 @@ SUPABASE_URL   = os.getenv("SUPABASE_URL")
 SUPABASE_KEY   = os.getenv("SUPABASE_KEY")
 CHARACTER_NAME = os.getenv("CHARACTER_NAME", "MyCharacter")
 DEFAULT_ZONE   = os.getenv("DEFAULT_ZONE", "Unknown")
+FAMILY_NAME    = os.getenv("FAMILY_NAME", "")
 
 POLL_INTERVAL = 0
 SESSION_RESET_DELAY_SECONDS = float(os.getenv("SESSION_RESET_DELAY_SECONDS", "1.5"))
@@ -32,8 +33,10 @@ LOCAL_DB_PATH = Path(os.getenv("LOCAL_DB_PATH", str(BASE_DIR / "data" / "loot_tr
 def _get_bool_env(key: str, default: bool) -> bool:
     return os.getenv(key, str(default)).strip().lower() in {"1", "true", "yes", "on"}
 
-SHOW_OCR_LOG = _get_bool_env("SHOW_OCR_LOG", False)
+SHOW_OCR_LOG  = _get_bool_env("SHOW_OCR_LOG",  False)
 SHOW_OCR_PANE = _get_bool_env("SHOW_OCR_PANE", False)
+SHOW_LIVE_LOG = _get_bool_env("SHOW_LIVE_LOG", True)
+LIGHT_MODE    = _get_bool_env("LIGHT_MODE",    False)
 ITEMS_FONT_SIZE = max(12, min(20, int(os.getenv("ITEMS_FONT_SIZE", "12"))))
 
 def save_env_setting(key: str, value: Union[str, bool, int, float]) -> None:

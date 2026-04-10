@@ -12,7 +12,7 @@
     selected_session: 'No sessions',
     show_live_log: true,
     light_mode: false,
-    family_name: "temp",
+    family_name: "",
   };
 
   let sidebarOpen = false;
@@ -235,7 +235,13 @@
 
         <div class="settings-group">
           <h3>Family Name</h3>
-          <input class="name-box" type="text" bind:value={state.family_name} placeholder="Enter Family Name" />
+          <input
+            class="name-box"
+            type="text"
+            value={state.family_name}
+            placeholder="Enter Family Name"
+            on:change={(e) => api('set_family_name', 'POST', { value: e.currentTarget.value })}
+          />
         </div>
 
         <div class="settings-group">
@@ -321,6 +327,7 @@
             <input
               type="checkbox"
               checked={state.light_mode}
+              on:change={(e) => api('toggle_light_mode', 'POST', { value: e.currentTarget.checked })}
             >
             <span>Light Mode</span>
           </label>
@@ -371,10 +378,11 @@
             <h2>LIVE LOG</h2>
             <pre style="font-size: {state.items_font_size ?? 12}px">{(state.show_ocr ? state.logs : state.logs.filter(l => !l.includes('[OCR]'))).join('\n')}</pre>
           </article>
-        {/if}
 
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div class="drag-handle-h" on:mousedown={startDragH}></div>
+          <!-- svelte-ignore a11y-no-static-element-interactions -->
+          <div class="drag-handle-h" on:mousedown={startDragH}></div>
+
+        {/if}
 
         <article style="flex: 1; min-width: 0;">
           <h2>SESSION TOTALS</h2>

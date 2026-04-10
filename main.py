@@ -10,7 +10,10 @@ from core.config import (
     LOCAL_DB_PATH,
     SHOW_OCR_LOG,
     SHOW_OCR_PANE,
+    SHOW_LIVE_LOG,
+    LIGHT_MODE,
     ITEMS_FONT_SIZE,
+    FAMILY_NAME,
     save_env_setting,
 )
 from core.parser import get_item_zone, is_dehkia_two_indicator, get_dehkia_two_upgrade
@@ -154,6 +157,15 @@ def main():
         font_size = max(12, min(20, int(n)))
         save_env_setting("ITEMS_FONT_SIZE", font_size)
 
+    def save_live_log_settings(show_live_log: bool):
+        save_env_setting("SHOW_LIVE_LOG", show_live_log)
+
+    def save_light_mode(light_mode: bool):
+        save_env_setting("LIGHT_MODE", light_mode)
+
+    def save_family_name(name: str):
+        save_env_setting("FAMILY_NAME", name)
+
     def get_db_stats():
         return local_store.get_db_stats()
 
@@ -169,6 +181,8 @@ def main():
         ocr_settings_changed_cb=save_ocr_settings,
         show_ocr_pane_default=SHOW_OCR_PANE,
         ocr_pane_settings_changed_cb=save_ocr_pane_settings,
+        show_live_log_default=SHOW_LIVE_LOG,
+        live_log_settings_changed_cb=save_live_log_settings,
         get_tracking_window_cb=tracker.get_tracking_window_size,
         set_tracking_window_cb=set_tracking_window,
         get_font_size_cb=get_font_size,
@@ -177,6 +191,10 @@ def main():
         pause_cb=pause_session,
         resume_cb=resume_session,
         is_paused_cb=tracker.is_paused,
+        family_name=FAMILY_NAME,
+        set_family_name_cb=save_family_name,
+        light_mode=LIGHT_MODE,
+        set_light_mode_cb=save_light_mode,
     )
 
     # Run tray, passing tracker methods

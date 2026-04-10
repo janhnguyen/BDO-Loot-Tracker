@@ -47,6 +47,10 @@ class LogWindow:
         pause_cb=None,
         resume_cb=None,
         is_paused_cb=None,
+        family_name: str = "",
+        set_family_name_cb=None,
+        light_mode: bool = False,
+        set_light_mode_cb=None,
     ):
         self.get_status_cb = get_status_cb
         self.start_cb = start_cb
@@ -65,6 +69,10 @@ class LogWindow:
         self.pause_cb = pause_cb
         self.resume_cb = resume_cb
         self.is_paused_cb = is_paused_cb
+        self.family_name = family_name
+        self.set_family_name_cb = set_family_name_cb
+        self.light_mode = light_mode
+        self.set_light_mode_cb = set_light_mode_cb
 
         self.show_ocr = show_ocr_default
         self.show_ocr_pane = show_ocr_pane_default
@@ -242,6 +250,8 @@ class LogWindow:
                 "items_font_size": self.get_font_size_cb() if self.get_font_size_cb else 12,
                 "sessions": sessions,
                 "selected_session": self._selected_session,
+                "family_name": self.family_name,
+                "light_mode": self.light_mode,
             }
 
     def _handle_action(self, action: str, body: dict[str, Any]):
@@ -274,12 +284,20 @@ class LogWindow:
             self.show_live_log = bool(body.get("value", False))
             if self.live_log_settings_changed_cb:
                 self.live_log_settings_changed_cb(self.show_live_log)
+        elif action == "toggle_light_mode":
+            self.light_mode = bool(body.get("value", False))
+            if self.set_light_mode_cb:
+                self.set_light_mode_cb(self.light_mode)
         elif action == "set_tracking_window" and self.set_tracking_window_cb:
             self.set_tracking_window_cb(body.get("value", 20))
         elif action == "set_font_size" and self.set_font_size_cb:
             self.set_font_size_cb(body.get("value", 12))
         elif action == "clear_totals":
             self._clear_totals()
+        elif action == "set_family_name":
+            self.family_name = str(body.get("value", ""))
+            if self.set_family_name_cb:
+                self.set_family_name_cb(self.family_name)
 
     def _make_handler(self):
         log_window = self
