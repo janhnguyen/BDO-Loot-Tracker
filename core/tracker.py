@@ -22,7 +22,7 @@ _WINDOW_MIN = 15
 _WINDOW_MAX = 30
 
 # Scroll detection: maximum per-pixel mean diff (0-255) to accept a shift match.
-_SCROLL_MATCH_THRESHOLD = 25
+_SCROLL_MATCH_THRESHOLD = 15
 # Maximum scroll to check in pixels (full-res). Covers many simultaneous drops.
 _MAX_SCROLL_PX = 300
 
@@ -124,7 +124,7 @@ class Tracker:
                 best_s = s
         
         # Reject if the shift doesn't explain the change better than no shift.
-        if best_score > _SCROLL_MATCH_THRESHOLD or best_score >= (score_0*2):
+        if best_score > _SCROLL_MATCH_THRESHOLD or best_score >= (score_0*3):
             return 0
         return best_s * 8
 
