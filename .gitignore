@@ -4,6 +4,9 @@
 # Calibration output
 calibration_debug.png
 
+# Bundled WebView2 runtime — large binary, not for source control
+helpers/WebView2Runtime/
+
 # Python
 __pycache__/
 *.pyc

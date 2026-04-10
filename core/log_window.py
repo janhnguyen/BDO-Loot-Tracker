@@ -419,7 +419,13 @@ class LogWindow:
         return False
 
     def _ensure_webview2(self):
-        """Silently install WebView2 if missing, using the bundled bootstrapper."""
+        """Point WebView2 at the bundled fixed-version runtime if present, otherwise
+        fall back to a system install or the online bootstrapper."""
+        import os
+        runtime_dir = _RESOURCE_ROOT / "helpers" / "WebView2Runtime"
+        if runtime_dir.exists():
+            os.environ['WEBVIEW2_BROWSER_EXECUTABLE_FOLDER'] = str(runtime_dir)
+            return
         if self._is_webview2_installed():
             return
         bootstrapper = _RESOURCE_ROOT / "helpers" / "MicrosoftEdgeWebview2Setup.exe"
