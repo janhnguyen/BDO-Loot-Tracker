@@ -18,6 +18,7 @@ build/
 bdoLootTracker.iml
 main.spec
 .claude
+get-pip.py
 
 # Svelte
 ui/node_modules/
