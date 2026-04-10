@@ -146,6 +146,12 @@ def resolve_batch_zone_overrides(item_names: list[str]) -> dict[str, str]:
 
 # Loot parser
 
+def _clean_ocr(raw: str):
+    # Hard coded text parsing
+    clean = raw.replace("[Mushroom Hyphal.","[Mushroom Hypha].")
+    clean = clean.replace("[Mushroom Hyphal]","[Mushroom Hypha]")
+    return clean
+
 def _norm_digits(s: str) -> str:
     return (s.replace('|', '1').replace('!', '1').replace('l', '1')
              .replace('I', '1').replace(']', '1').replace('[', '1')
@@ -155,13 +161,14 @@ def parse_loot(text: str):
     # Expected line format: You have obtained ● [Item Name] xN
     results = []
     for line in text.splitlines():
+        line = _clean_ocr(line)
         line = line.strip()
         if not line:
             continue
         if '[' not in line or ']' not in line:
             continue
         line_stripped = re.sub(r'\bevent\b', '', line.replace("[", "").replace("]", ""), flags=re.IGNORECASE).strip()
-        line_stripped = line_stripped.replace('\u2019', "'").replace('\u2018', "'").replace('`', "'")
+        line_stripped = line_stripped.replace('\u2019', "'").replace('\u2018', "'").replace('`', "'").replace(",","")
         line_lc = line_stripped.lower()
         for name in ITEM_NAMES:
             idx = line_lc.find(name.lower())

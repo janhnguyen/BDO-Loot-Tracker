@@ -22,7 +22,7 @@ _WINDOW_MIN = 15
 _WINDOW_MAX = 30
 
 # Scroll detection: maximum per-pixel mean diff (0-255) to accept a shift match.
-_SCROLL_MATCH_THRESHOLD = 25
+_SCROLL_MATCH_THRESHOLD = 15
 # Maximum scroll to check in pixels (full-res). Covers many simultaneous drops.
 _MAX_SCROLL_PX = 300
 
@@ -109,7 +109,7 @@ class Tracker:
 
         # Baseline: direct frame comparison (s=0). If nearly identical, no scroll.
         score_0 = sum(abs(av - bv) for av, bv in zip(a, b)) / n_total
-        if score_0 < 2:
+        if score_0 < 0.1:
             return 0
 
         best_s, best_score = 0, float('inf')
@@ -122,9 +122,9 @@ class Tracker:
             if score < best_score:
                 best_score = score
                 best_s = s
-
+        
         # Reject if the shift doesn't explain the change better than no shift.
-        if best_score > _SCROLL_MATCH_THRESHOLD or best_score >= score_0:
+        if best_score > _SCROLL_MATCH_THRESHOLD or best_score >= (score_0*3):
             return 0
         return best_s * 8
 
@@ -198,8 +198,8 @@ class Tracker:
                     # Crop only the newly scrolled-in content at the bottom.
                     pw, ph = processed_img.size
                     new_strip = processed_img.crop((0, ph - shift_px, pw, ph))
+                    new_strip = new_strip.resize((pw*5,shift_px*5))
                     text = pytesseract.image_to_string(new_strip, config="--psm 6")
-
                     drops = parse_loot(text)
                     if drops:
                         self._current_batch_overrides = resolve_batch_zone_overrides(
