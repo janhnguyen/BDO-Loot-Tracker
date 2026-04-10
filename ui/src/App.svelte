@@ -12,6 +12,7 @@
     selected_session: 'No sessions',
     show_live_log: true,
     light_mode: false,
+    family_name: "temp",
   };
 
   let sidebarOpen = false;
@@ -233,8 +234,19 @@
       {:else if sidebarPanel === 'settings'}
 
         <div class="settings-group">
+          <h3>Family Name</h3>
+          <input class="name-box" type="text" bind:value={state.family_name} placeholder="Enter Family Name" />
+        </div>
+
+        <div class="settings-group">
           <h3>Calibration</h3>
           <button class="settings-btn" on:click={() => api('calibrate')}>Calibrate</button>
+        </div>
+
+        <div class="settings-group">
+          <h3>Database</h3>
+          <button class="settings-btn" on:click={() => api('')}>Clear Database</button>
+          <button class="settings-btn" on:click={() => api('')}>Upload Sessions</button>
         </div>
 
         <div class="settings-group">
@@ -312,6 +324,10 @@
             >
             <span>Light Mode</span>
           </label>
+        </div>
+
+        <div class="settings-group">
+          <button class="settings-btn" on:click={() => api('')}>Reset Settings</button>
         </div>
 
       {/if}
