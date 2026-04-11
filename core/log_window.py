@@ -18,6 +18,14 @@ _RESOURCE_ROOT = (
 )
 _CHANGELOG_PATH = _RESOURCE_ROOT / "CHANGELOG.md"
 
+# Set WebView2 fixed-version runtime path before importing webview,
+# so pywebview picks it up during backend initialisation.
+_webview2_runtime = _RESOURCE_ROOT / "helpers" / "WebView2Runtime"
+if _webview2_runtime.exists():
+    import os as _os
+    _os.environ['WEBVIEW2_BROWSER_EXECUTABLE_FOLDER'] = str(_webview2_runtime)
+    del _os
+
 import webview
 
 
@@ -419,13 +427,9 @@ class LogWindow:
         return False
 
     def _ensure_webview2(self):
-        """Point WebView2 at the bundled fixed-version runtime if present, otherwise
-        fall back to a system install or the online bootstrapper."""
-        import os
-        runtime_dir = _RESOURCE_ROOT / "helpers" / "WebView2Runtime"
-        if runtime_dir.exists():
-            os.environ['WEBVIEW2_BROWSER_EXECUTABLE_FOLDER'] = str(runtime_dir)
-            return
+        """Fallback: if no bundled runtime, try system install or online bootstrapper."""
+        if _webview2_runtime.exists():
+            return  # env var already set at module load
         if self._is_webview2_installed():
             return
         bootstrapper = _RESOURCE_ROOT / "helpers" / "MicrosoftEdgeWebview2Setup.exe"
@@ -448,7 +452,7 @@ class LogWindow:
                 height=760,
                 min_size=(520, 400),
             )
-            webview.start()
+            webview.start(gui="edgechromium")
         except KeyboardInterrupt:
             pass
         except Exception as e:

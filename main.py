@@ -1,7 +1,16 @@
 import subprocess
 import sys
-from pathlib import Path
+import os
 
+base_path = r"C:\Program Files (x86)\Microsoft\EdgeWebView\Application"
+
+# Get latest version folder
+versions = sorted(os.listdir(base_path), reverse=True)
+webview_path = os.path.join(base_path, versions[0])
+
+os.environ["WEBVIEW2_BROWSER_EXECUTABLE_FOLDER"] = webview_path
+
+from pathlib import Path
 from core.log_window import LogWindow
 from core.tracker import Tracker
 from core.tray import run_tray
