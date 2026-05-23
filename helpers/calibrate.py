@@ -41,7 +41,10 @@ except ImportError:
     HAS_OCR = False
 
 # ── Config ────────────────────────────────────────────────────
-TRACKER_FILE = Path(__file__).resolve().parent.parent / ".env"
+if getattr(sys, "frozen", False):
+    TRACKER_FILE = Path(sys.executable).parent / ".env"
+else:
+    TRACKER_FILE = Path(__file__).resolve().parent.parent / ".env"
 
 ACCENT      = "#D4A017"   # BDO gold
 ACCENT_DIM  = "#9A7510"

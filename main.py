@@ -1,17 +1,21 @@
+import os
 import subprocess
 import sys
+import threading
 from pathlib import Path
 
 from core.log_window import LogWindow
 from core.tracker import Tracker
 from core.tray import run_tray
 from core.local_store import LocalStore
+from dotenv import load_dotenv
 from core.config import (
     LOCAL_DB_PATH,
     SHOW_OCR_LOG,
     SHOW_OCR_PANE,
     ITEMS_FONT_SIZE,
     save_env_setting,
+    ENV_PATH,
 )
 from core.parser import get_item_zone, is_dehkia_two_indicator, get_dehkia_two_upgrade
 
@@ -136,8 +140,24 @@ def main():
         save_env_setting("SHOW_OCR_PANE", show_ocr_pane)
 
     def launch_calibration():
-        calibrate_script = Path(__file__).resolve().parent / "helpers" / "calibrate.py"
-        subprocess.Popen([sys.executable, str(calibrate_script)], cwd=calibrate_script.parent.parent)
+        if getattr(sys, "frozen", False):
+            proc = subprocess.Popen([sys.executable, "--calibrate"])
+        else:
+            calibrate_script = Path(__file__).resolve().parent / "helpers" / "calibrate.py"
+            proc = subprocess.Popen([sys.executable, str(calibrate_script)], cwd=calibrate_script.parent.parent)
+
+        def _reload_region():
+            proc.wait()
+            load_dotenv(ENV_PATH, override=True)
+            tracker.set_region(
+                float(os.getenv("REGION_LEFT_PCT", "0.65")),
+                float(os.getenv("REGION_TOP_PCT", "0.72")),
+                float(os.getenv("REGION_RIGHT_PCT", "1.0")),
+                float(os.getenv("REGION_BOTTOM_PCT", "0.88")),
+            )
+            log_window._append_system("Calibration saved — capture region updated.")
+
+        threading.Thread(target=_reload_region, daemon=True).start()
         return "Calibration launched."
 
     def set_tracking_window(n: int):
@@ -191,4 +211,15 @@ def main():
     log_window.run()
 
 if __name__ == "__main__":
-    main()
+    if "--calibrate" in sys.argv:
+        import importlib.util
+        if getattr(sys, "frozen", False):
+            cal_path = Path(sys._MEIPASS) / "helpers" / "calibrate.py"
+        else:
+            cal_path = Path(__file__).resolve().parent / "helpers" / "calibrate.py"
+        spec = importlib.util.spec_from_file_location("calibrate", cal_path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        mod.CalibrationApp().run()
+    else:
+        main()

@@ -42,6 +42,11 @@ class Tracker:
         self._paused = False
         self._current_batch_overrides: dict[str, str] = {}
 
+        self._region_left = REGION_LEFT_PCT
+        self._region_top = REGION_TOP_PCT
+        self._region_right = REGION_RIGHT_PCT
+        self._region_bottom = REGION_BOTTOM_PCT
+
     def set_zone(self, zone):
         self._zone = zone
 
@@ -56,6 +61,12 @@ class Tracker:
 
     def set_tracking_window_size(self, n: int):
         self._tracking_window_size = max(_WINDOW_MIN, min(_WINDOW_MAX, int(n)))
+
+    def set_region(self, left: float, top: float, right: float, bottom: float):
+        self._region_left = left
+        self._region_top = top
+        self._region_right = right
+        self._region_bottom = bottom
 
     def is_running(self):
         return self._running
@@ -134,10 +145,10 @@ class Tracker:
             w, h = monitor["width"], monitor["height"]
 
             region = {
-                "left": int(w * REGION_LEFT_PCT),
-                "top": int(h * REGION_TOP_PCT),
-                "width": int(w * (REGION_RIGHT_PCT - REGION_LEFT_PCT)),
-                "height": int(h * (REGION_BOTTOM_PCT - REGION_TOP_PCT)),
+                "left": int(w * self._region_left),
+                "top": int(h * self._region_top),
+                "width": int(w * (self._region_right - self._region_left)),
+                "height": int(h * (self._region_bottom - self._region_top)),
             }
 
             img = sct.grab(region)

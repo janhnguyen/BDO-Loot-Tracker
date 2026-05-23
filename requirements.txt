@@ -12,4 +12,4 @@ pystray>=0.19.5     # system tray icon
 requests>=2.31.0    # HTTP uploads to Supabase
 pytesseract>=0.3.10 # Tesseract OCR bindings
 python-dotenv>=1.0.1 # load local .env configuration
-pywebview>=5.0       # native desktop window host for local UI
+PySide6>=6.7.0       # native desktop window host for local UI

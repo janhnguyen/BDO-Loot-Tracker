@@ -12,11 +12,12 @@ __pycache__/
 # Local Database
 loot_tracker.db
 
-dist
-.idea
+dist/
 build/
+*.spec
+*.zip
+.idea
 bdoLootTracker.iml
-main.spec
 .claude
 
 # Svelte

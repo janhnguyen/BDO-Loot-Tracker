@@ -18,7 +18,9 @@ _RESOURCE_ROOT = (
 )
 _CHANGELOG_PATH = _RESOURCE_ROOT / "CHANGELOG.md"
 
-import webview
+from PySide6.QtCore import QTimer, QUrl
+from PySide6.QtWebEngineWidgets import QWebEngineView
+from PySide6.QtWidgets import QApplication, QMainWindow
 
 
 class LogWindow:
@@ -367,72 +369,35 @@ class LogWindow:
     def show(self):
         if self._window is None:
             return
-        self._window.show()
-        if hasattr(self._window, "restore"):
-            self._window.restore()
-        if hasattr(self._window, "bring_to_front"):
-            self._window.bring_to_front()
+        # QTimer.singleShot is thread-safe — queues the call on the main event loop
+        QTimer.singleShot(0, self._bring_to_front)
 
-    @staticmethod
-    def _is_webview2_installed() -> bool:
-        if sys.platform != "win32":
-            return True
-        import winreg
-        keys = [
-            r"SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}",
-            r"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}",
-        ]
-        for key_path in keys:
-            for hive in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
-                try:
-                    winreg.OpenKey(hive, key_path).Close()
-                    return True
-                except OSError:
-                    continue
-        return False
-
-    def _ensure_webview2(self):
-        """Silently install WebView2 if missing, using the bundled bootstrapper."""
-        if self._is_webview2_installed():
-            return
-        bootstrapper = _RESOURCE_ROOT / "helpers" / "MicrosoftEdgeWebview2Setup.exe"
-        if not bootstrapper.exists():
-            return
-        import subprocess
-        subprocess.run([str(bootstrapper), "/silent", "/install"], check=False)
+    def _bring_to_front(self):
+        if self._window:
+            self._window.showNormal()
+            self._window.raise_()
+            self._window.activateWindow()
 
     def run(self):
         self.refresh_sessions()
-        self._ensure_webview2()
         self._server = ThreadingHTTPServer((self._host, self._port), self._make_handler())
         self._server_thread = threading.Thread(target=self._server.serve_forever, daemon=True)
         self._server_thread.start()
         try:
-            self._window = webview.create_window(
-                "BDO Loot Tracker",
-                f"http://{self._host}:{self._port}",
-                width=1132,  # CSS max-width (1100) + horizontal padding (2×16)
-                height=760,
-                min_size=(520, 400),
-            )
-            webview.start()
+            import os
+            os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--log-level=3")
+            app = QApplication.instance() or QApplication(sys.argv)
+            self._window = QMainWindow()
+            self._window.setWindowTitle("BDO Loot Tracker")
+            self._window.resize(1132, 760)  # CSS max-width (1100) + horizontal padding (2×16)
+            self._window.setMinimumSize(520, 400)
+            view = QWebEngineView()
+            view.load(QUrl(f"http://{self._host}:{self._port}"))
+            self._window.setCentralWidget(view)
+            self._window.show()
+            app.exec()
         except KeyboardInterrupt:
             pass
-        except Exception as e:
-            import ctypes
-            if sys.platform == "win32":
-                ctypes.windll.user32.MessageBoxW(
-                    0,
-                    (
-                        "The app requires the Microsoft Edge WebView2 Runtime.\n\n"
-                        "Please download and install it, then restart:\n"
-                        "https://developer.microsoft.com/en-us/microsoft-edge/webview2/"
-                    ),
-                    "WebView2 Required",
-                    0x10,  # MB_ICONERROR
-                )
-            else:
-                print(f"Failed to start webview: {e}")
         finally:
             if self._server:
                 self._server.shutdown()
