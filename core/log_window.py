@@ -10,6 +10,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
+from .parser import get_item_value_for_zone
+
 # When frozen by PyInstaller, bundled resources live in sys._MEIPASS.
 # In development they live relative to this source file.
 _RESOURCE_ROOT = (
@@ -49,6 +51,7 @@ class LogWindow:
         pause_cb=None,
         resume_cb=None,
         is_paused_cb=None,
+        update_market_prices_cb=None,
     ):
         self.get_status_cb = get_status_cb
         self.start_cb = start_cb
@@ -68,6 +71,8 @@ class LogWindow:
         self.pause_cb = pause_cb
         self.resume_cb = resume_cb
         self.is_paused_cb = is_paused_cb
+        self.update_market_prices_cb = update_market_prices_cb
+        self._market_updating = False
 
         self.show_ocr = show_ocr_default
         self.show_ocr_pane = show_ocr_pane_default
@@ -77,6 +82,7 @@ class LogWindow:
 
         self._lock = threading.Lock()
         self._totals: dict[str, int] = {}
+        self._session_silver: float = 0.0
         self._logs: list[str] = []
         self._session_labels: dict[str, int] = {}
         self._selected_session = "No sessions"
@@ -93,10 +99,12 @@ class LogWindow:
     def add_event(self, event):
         ts = event.timestamp.strftime("%H:%M:%S")
         line = f"[{ts}] {event.item_name} ×{event.quantity}"
+        value = get_item_value_for_zone(event.item_name, event.zone) * event.quantity
         with self._lock:
             self._logs.append(line)
             self._logs = self._logs[-400:]
             self._totals[event.item_name] = self._totals.get(event.item_name, 0) + event.quantity
+            self._session_silver += value
 
     def add_raw_ocr(self, text):
         if not self.show_ocr and not self.show_ocr_pane:
@@ -130,6 +138,7 @@ class LogWindow:
     def _clear_totals(self):
         with self._lock:
             self._totals = {}
+            self._session_silver = 0.0
 
     def clear_totals(self):
         self._clear_totals()
@@ -237,12 +246,14 @@ class LogWindow:
                 "timer_seconds": timer_seconds,
                 "logs": self._logs[-250:],
                 "totals": [{"name": name, "qty": qty} for name, qty in totals],
+                "session_silver": self._session_silver,
                 "show_ocr": self.show_ocr,
                 "show_ocr_pane": self.show_ocr_pane,
                 "tracking_window_size": self.get_tracking_window_cb() if self.get_tracking_window_cb else 20,
                 "items_font_size": self.get_font_size_cb() if self.get_font_size_cb else 12,
                 "sessions": sessions,
                 "selected_session": self._selected_session,
+                "market_updating": self._market_updating,
             }
 
     def _handle_action(self, action: str, body: dict[str, Any]):
@@ -277,6 +288,10 @@ class LogWindow:
             self.set_font_size_cb(body.get("value", 12))
         elif action == "clear_totals":
             self._clear_totals()
+        elif action == "update_market_prices" and self.update_market_prices_cb:
+            if not self._market_updating:
+                self._market_updating = True
+                self.update_market_prices_cb()
         elif action == "delete_session" and self.delete_session_cb:
             session_id = body.get("session_id")
             if session_id is not None:

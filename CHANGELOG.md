@@ -1,8 +1,10 @@
-## v0
+## v0.3.0-prerelease - 
 - Covering the detection area no longer duplicates items
 - In-depth session viewing
 - Sessions can now be deleted
 - Live Log now autoscrolls
+- Added total silver count to the current session
+- Market prices now update-able
 
 ## v0.2.1-prerelease - May 23rd, 2026
 - Replaced pywebview2 with PySide6

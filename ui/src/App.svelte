@@ -264,6 +264,7 @@
 
   let liveLogEl;
   let liveLogAtBottom = true;
+  let modalEl;
 
   function onLiveLogScroll() {
     if (!liveLogEl) return;
@@ -273,6 +274,9 @@
   afterUpdate(() => {
     if (liveLogEl && liveLogAtBottom) {
       liveLogEl.scrollTop = liveLogEl.scrollHeight;
+    }
+    if (confirmDeleteId != null && modalEl) {
+      modalEl.focus();
     }
   });
 
@@ -435,8 +439,15 @@
   {#if confirmDeleteId != null}
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div class="modal-overlay" on:click={() => confirmDeleteId = null} on:keydown={(e) => e.key === 'Escape' && (confirmDeleteId = null)}>
-      <!-- svelte-ignore a11y-no-static-element-interactions -->
-      <div class="modal" on:click|stopPropagation>
+      <div
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        tabindex="-1"
+        bind:this={modalEl}
+        on:click|stopPropagation
+        on:keydown|stopPropagation={(e) => { if (e.key === 'Enter') confirmDelete(); else if (e.key === 'Escape') confirmDeleteId = null; }}
+      >
         <div class="modal-title">Delete Session #{confirmDeleteId}?</div>
         <div class="modal-body">This will permanently remove the session and all its loot data from the local database.</div>
         <div class="modal-actions">
@@ -477,7 +488,7 @@
         class:active={sidebarPanel === 'database'}
         on:click={() => openSidebar('database')}
       >
-        Database
+        Sessions
       </button>
       <button
         class="nav-btn"
@@ -521,13 +532,17 @@
           <div class="db-section-label">Session History</div>
           <div class="db-sessions">
             {#each dbStats.sessions as s}
-              <!-- svelte-ignore a11y-no-static-element-interactions -->
-              <div class="db-session db-session-clickable" on:click={() => openSessionDetail(s.id)}>
+              <div
+                class="db-session db-session-clickable"
+                role="button"
+                tabindex="0"
+                on:click={() => openSessionDetail(s.id)}
+                on:keydown={(e) => { if (e.key === 'Enter') openSessionDetail(s.id); else if (e.key === 'Escape') closeSessionDetail(); }}
+              >
                 <div class="db-session-head">
                   <span class="db-session-id">#{s.id}</span>
                   <span class="db-session-zone">{s.zone}</span>
                   <span class="db-badge" class:db-badge-live={!s.ended_at}>{s.ended_at ? 'done' : 'live'}</span>
-                  <!-- svelte-ignore a11y-no-static-element-interactions -->
                   <button class="db-delete-btn" on:click|stopPropagation={() => confirmDeleteId = s.id} title="Delete session">✕</button>
                 </div>
                 <div class="db-session-stats">
@@ -573,6 +588,16 @@
         <div class="settings-group">
           <h3>Calibration</h3>
           <button class="settings-btn" on:click={() => api('calibrate')}>Calibrate</button>
+        </div>
+
+        <div class="settings-group">
+          <h3>Items</h3>
+          <button
+            class="settings-btn"
+            disabled={state.market_updating}
+            on:click={() => api('update_market_prices')}
+          >{state.market_updating ? 'Fetching…' : 'Update'}</button>
+          <p class="settings-hint">Fetch market prices from Arsha.io.</p>
         </div>
 
         <div class="settings-group">
@@ -682,7 +707,7 @@
         <div class="drag-handle-h" on:mousedown={startDragH}></div>
 
         <article style="flex: 1; min-width: 0;">
-          <h2>SESSION TOTALS</h2>
+          <h2>SESSION TOTALS <span class="session-silver">{fmtSilver(state.session_silver ?? 0)}</span></h2>
           <pre style="font-size: {state.items_font_size ?? 12}px">{state.totals.map((t) => `${t.name} ×${t.qty}`).join('\n')}</pre>
         </article>
       </div>

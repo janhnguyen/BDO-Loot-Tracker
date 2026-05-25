@@ -45,6 +45,7 @@ Alluvial Gold,11400
 Aloe,1150
 Amanita Mushroom,2630
 Amanita Mushroom Hypha,16800
+Amplified Lightstone of Wind: Feather,1010000000
 Ancient Guardian's Seal,5950000
 Ancient Mushroom,3510
 Ancient Mushroom Hypha,22400
@@ -52,6 +53,11 @@ Ancient Weapon Core,8000000
 Apple,775
 Arrow Mushroom,760
 Arrow Mushroom Hypha,22400
+Artisan's Special Stuffed Llama,70000000
+Artisan's Special Stuffed Snowfield Yak Head,8250000
+Artisan's Special Stuffed Weasel,20600000
+Artisan's Special Stuffed Yak Head,17200000
+Artisan's Stuffed Snowfield Ili Pika,10200000
 Asadal Belt,125000000
 Asadal Necklace,40500000
 Ascending Noble Sword,18000
@@ -88,10 +94,12 @@ Azwell Shortsword,34000
 Azwell Slayer,34000
 Azwell Staff,34000
 Azwell Swallowtail Fan,34000
+BON Magic Crystal - Addis,171000000
 Baconaua Cestus,7800000
 Baduum Haladie,21100
 Bag of Muddy Water,2230
 Baharom Dual Glaives,7800000
+Balenos Fishing Rod,82500000
 Bamboo Sprout,1640
 Banana,730
 Bares Amulet,267000
@@ -243,6 +251,7 @@ Blood Ruby Earrings,73000
 Blood Ruby Necklace,184000
 Blood Ruby Ring,88000
 Bloody Tree Knot,10100
+Blue Cloud Pattern Wallpaper,35000000
 Blue Coral,390000
 Blue Coral Belt,75000
 Blue Coral Earring,1500000
@@ -268,6 +277,8 @@ Breath of Narcion,25200000
 Breath of Omua,23400000
 Breath of the Endtimes,3890000
 Breath of the Morning,3890000
+Breath-imbued Stuffed Cliffside Mountain Sheep Head,307000000
+Breath-imbued Stuffed Rock Elephant Head,277000000
 Breezy White Coral,1620000
 Breezy White Coral Belt,1940000
 Brilliant Blue Coral Belt,319000
@@ -290,6 +301,9 @@ Cabbage,3510
 Cactus Rind,362
 Cactus Sap,4800
 Cactus Thorn,4170
+Calpheon Chargers' Barding,395000000
+Calpheon Fishing Rod,313000000
+Calpheon Traditional Alchemy Tool,4020000
 Caphras Essence,935000
 Caphras Stone,2680000
 Caphras Tree Plank,23300
@@ -396,7 +410,7 @@ Date Palm,1070
 Dawn Earring,199000000
 Dawn Fallen Silk,3480000
 Daybreak Blue Coral,1060000
-Daybreak Blue Coral Belt,920000
+Daybreak Blue Coral Belt,740000
 Dead Tree Essence,302000
 Deboreka Belt,485000000
 Deboreka Earring,580000000
@@ -522,7 +536,7 @@ Dried Grouper,18200
 Dried Grunt,72000
 Dried Gunnel,5550
 Dried Gurnard,3270
-Dried Hatchetfish,2350
+Dried Hatchetfish,2510
 Dried Herring,19300
 Dried Horn Fish,4800
 Dried Jellyfish,2880
@@ -607,7 +621,7 @@ Dried Silver Stripe Round Herring,2820
 Dried Skipjack,7050
 Dried Smelt,5200
 Dried Smokey Chromis,34600
-Dried Snakehead,37500
+Dried Snakehead,39900
 Dried Soho Bitterling,2210
 Dried South Torrent Catfish,2800
 Dried Spined Bittering,13700
@@ -660,6 +674,7 @@ Elisha Belt,123000
 Elisha Earring,75000
 Elisha Necklace,224000
 Elisha Ring,79500
+Elixir of Persistence,212000
 Elsh Amulet,62500
 Elsh Axe,62500
 Elsh Battle Axe,62500
@@ -699,6 +714,9 @@ Enhanced Flax Fabric,75000
 Enlightened Blade of Balance,7800000
 Enlightened Blade of Harmony,71500
 Enlightened One's Cotton Fabric,7000000
+Epheria Carrack: Balance (Chiro's Black Plating),8900000000
+Epheria Carrack: Volante (Chiro's Cannon),22700000000
+Epheria Sailboat: Sea Dragon Figurehead,279000000
 Essence of Dawn,67000000
 Essence of Dawn - Accuracy,93500000
 Essence of Dawn - Black Spirit's Rage,92500000
@@ -719,6 +737,7 @@ Faint Origin of Dark Hunger,540000000
 Fallen God's Armor,21300000000
 Fancy Feather,11200
 Fancy Reptile Skin,3010
+Farm Wagon Badge,22200000
 Feather Wolf Hide,710
 Ferocious Leather,414000
 Fidei Clavis,24200
@@ -757,13 +776,15 @@ Fog Mushroom Hypha,15500
 Forest Emerald,1890000
 Forest Emerald Necklace,187000
 Forest Fury,10200000
+Forest Path Wagon Cover,3560000000
+Forest Path Wagon Flag,3560000000
 Forest Ronaros Ring,6750000
 Fortuna's Luck Armor,47300
 Fortuna's Luck Shoes,35500
 Fortune Teller Mushroom,700
 Fortune Teller Mushroom Hypha,19700
 Fox Blood,26900
-Fox Hide,1000
+Fox Hide,2630
 Fox Meat,17300
 Freekeh,1760
 Freekeh Flour,525
@@ -834,7 +855,7 @@ Green Pendulous Mushroom,489
 Griffon Claw,430000
 Griffon Feather,1890
 Griffon Leather,1470000
-Griffon's Helmet,293000000
+Griffon's Helmet,1080000000
 Ground Bird Meat,11900
 Grunil Armor,79000
 Grunil Gloves,48900
@@ -866,7 +887,7 @@ Hesus Necklace,146000
 Hesus Ring,58500
 Heve's Strength Armor,66500
 Heve's Strength Gloves,38500
-Heve's Strength Helmet,64500
+Heve's Strength Helmet,95500000
 Heve's Strength Shoes,44900
 High-quality Acacia Seed,21500
 High-quality Amanita Mushroom,13200
@@ -919,7 +940,7 @@ High-quality Haystack,70500
 High-quality Hot Pepper,12100
 High-quality Hot Pepper Seed,75000
 High-quality Hump Mushroom,17600
-High-quality Hump Mushroom Hypha,112000
+High-quality Hump Mushroom Hypha,56500
 High-quality Leccinum,5750
 High-quality Leccinum Mushroom Hypha,65500
 High-quality Mesima,18900
@@ -958,7 +979,7 @@ High-quality Seed Sweet Potato,7050
 High-quality Silk Honey Grass,1940
 High-quality Silk Honey Grass Seed,67000
 High-quality Silver Azalea,2230
-High-quality Silver Azalea Seed,11100
+High-quality Silver Azalea Seed,15400
 High-quality Sky Mushroom,3680
 High-quality Sky Mushroom Hypha,107000
 High-quality Strawberry,6250
@@ -998,6 +1019,7 @@ Hughol's Vediant,51500000
 Hump Mushroom,3510
 Hump Mushroom Hypha,22400
 Immaculate Crescent Blade,7800000
+Immortal: Corruption Draught,30400000
 Incense Trinket,18000
 Indigo Lapis Lazuli,2740000
 Inorganic Fertilizer,2330
@@ -1019,8 +1041,10 @@ Jade,37500
 Jade Coral Ingot,1690000
 Jooknip Gombangdae,24200
 Jubre Talisman,21100
+Juicy Steak,44000
 Kabua's Fragment,72500000
-Kagtum Submission Ring,1760000
+Kagtum Submission Ring,1920000000
+Kaia Rowboat Decoration,15100000
 Kalis Amulet,103000
 Kalis Axe,103000
 Kalis Battle Axe,103000
@@ -1051,6 +1075,7 @@ Kalis Slayer,103000
 Kalis Staff,103000
 Kalis Swallowtail Fan,103000
 Kamalam Cestus,71500
+Katan Combat Iron Armor for Camel,395000000
 Kite Shield,24200
 Knitting Yarn,4340
 Krea Amulet,72500
@@ -1147,6 +1172,7 @@ Kzarka Staff,241000000
 Kzarka Swallowtail Fan,241000000
 Labreska's Helmet,25500000000
 Ladothan Shard,24200
+Lahr Arcien Barding,395000000
 Lahr Mareca,24200
 Lamb Meat,18300
 Lapis Lazuli,51500
@@ -1154,8 +1180,9 @@ Laytenn's Power Stone,28300000
 Lead Ingot,65500
 Lead Ore,2390
 Leather Glaze,396000
+Leather Saddle of Storm,116000000
 Leather Vambrace,18000
-Leccinum,1090
+Leccinum,1510
 Leccinum Hypha,20100
 Leebur's Gloves,302000000
 Legendary Beast's Blood,154000
@@ -1201,17 +1228,21 @@ Llama Blood,13100
 Llama Hide,3740
 Llama Meat,19500
 Log,14000
-Loggia Alchemist's Clothes,710000
+Loggia Alchemist's Clothes,620000
 Loggia Belt,432000
 Loggia Cook's Clothes,560000
-Loggia Craftsman's Clothes,710000
+Loggia Craftsman's Clothes,49700000
 Loggia Earring,484000
 Loggia Fisher's Clothes,595000
+Loggia Flask,113000000
 Loggia Gatherer's Clothes,665000
-Loggia Hunter's Clothes,650000
+Loggia Hunter's Clothes,4580000
+Loggia Ladle,321000000
 Loggia Necklace,432000
 Loggia Ring,625000
+Loggia Sailing Log,322000000
 Loggia Sailor's Clothes,765000
+Loggia Tanning Knife,11200000
 Loggia Trainer's Clothes,705000
 Loopy Tree Plank,1930
 Loopy Tree Plywood,16000
@@ -1230,17 +1261,19 @@ Manos Diamond Necklace,21900000
 Manos Earring,170000000
 Manos Emerald Necklace,23300000
 Manos Fisher's Clothes,241000000
+Manos Flask,165000000
 Manos Gatherer's Clothes,241000000
 Manos Golden Coral Belt,153000000
 Manos Green Coral Belt,74500000
 Manos Hunter's Clothes,241000000
+Manos Ladle,580000000
 Manos Necklace,194000000
 Manos Red Coral Belt,128000000
 Manos Ring,184000000
 Manos Ruby Earring,9550000
 Manos Ruby Necklace,11600000
 Manos Ruby Ring,16900000
-Manos Sailor's Clothes,241000000
+Manos Sailor's Clothes,413000000
 Manos Sapphire Earring,16800000
 Manos Sapphire Necklace,23300000
 Manos Topaz Earring,13900000
@@ -1274,6 +1307,7 @@ Melted Zinc Shard,19300
 Memory Fragment,1340000
 Mercenary's Greatsword,71500
 Mercenary's Steel Greatsword,7800000
+Merchant Wagon Flag,8550000
 Mesima,3770
 Mesima Hypha,20100
 Mesto Earring,565000
@@ -1304,6 +1338,8 @@ Nert Ring,1410000
 Neshal Haladie,24200
 Nickel Ingot,167000
 Nickel Ore,7450
+Noble Wagon Badge,18900000
+Noble Wagon Cover,39600000
 Noc Ingot,111000
 Noc Ore,7450
 Nolina,401
@@ -1377,6 +1413,10 @@ Olive Seed,1840
 Ominous Ring,176000000
 Onion,4190
 Onion Seed,2730
+Oquilla Dream Barding,395000000
+Oquilla Dream Champron,220000000
+Oquilla Dream Horse Gear Set,1020000000
+Oquilla Dream Saddle,264000000
 Organic Fertilizer,20000
 Origin of Dark Hunger,1080000000
 Orkinrad's Belt,15200000
@@ -1524,7 +1564,7 @@ Resplendent Topaz Earrings,49900
 Resplendent Topaz Necklace,82000
 Resplendent Topaz Ring,43900
 Revived Lunar Necklace,131000000
-Revived River Necklace,319000000
+Revived River Necklace,2360000000
 Rhik Talisman,24200
 Rhino Blood,14700
 Rhino Hide,3660
@@ -1662,6 +1702,7 @@ Seleth Staff,68500
 Seleth Swallowtail Fan,68500
 Serap's Necklace,11000000
 Serpi Shotgun,24200
+Shabby Hide Stirrups,10100000
 Shard of the Drained Night,16800000
 Shard of the Furious Night,6150000
 Shard of the Tearful Night,17100000
@@ -1670,6 +1711,7 @@ Sharp Black Crystal Shard,5750000
 Sheep Blood,13600
 Sheep Hide,2060
 Shelled Seed,58000
+Shining Alchemy Stone of Protection,3160000000000
 Shining Gold Topaz Earrings,322000
 Shining Gold Topaz Necklace,1370000
 Shining Gold Topaz Ring,284000
@@ -1803,7 +1845,7 @@ Special Red-spotted Amanita Hypha,343000
 Special Rice,30300
 Special Rice Seed,42900
 Special Seed Potato,48100
-Special Seed Sweet Potato,76000
+Special Seed Sweet Potato,85500
 Special Silk Honey Grass,37300
 Special Silk Honey Grass Seed,80500
 Special Silver Azalea,37300
@@ -1837,11 +1879,14 @@ Steel,46900
 Steel Dagger,21100
 Steel Taritas Armor,286000
 Steel Taritas Gloves,195000
-Steel Taritas Helmet,247000
+Steel Taritas Helmet,17100000
 Steel Taritas Shoes,208000
 Sticky Liquid,8400
 Strawberry,545
 Strawberry Seed,1470
+Strong Wagon Wheel,10100000
+Stuffed Cliffside Mountain Sheep Head,139000000
+Stuffed Rock Elephant Head,75500000
 Sturdy Acacia Plywood,595000
 Sturdy Ash Plywood,268000
 Sturdy Birch Plywood,590000
@@ -1918,9 +1963,9 @@ Talis Gloves,32500
 Talis Helmet,35000
 Talis Necklace,155000
 Talis Ring,91000
-Talis Shoes,24200
+Talis Shoes,460000000
 Taritas Armor,31600
-Taritas Gloves,21300
+Taritas Gloves,25800000
 Taritas Helmet,26600
 Taritas Shoes,21100
 Tati Godr Sphera,71500
@@ -1929,6 +1974,9 @@ Teff,206
 Teff Flour,2540
 Teff Flour Dough,4190
 Tempest Sura Katana,71500
+Terrminé Champron,220000000
+Terrminé Horse Gear Set,1020000000
+Terrminé Saddle,264000000
 Theos Ornamental Knot,24200
 Theos Vitclari,24200
 Thick Fur,6450
@@ -1953,7 +2001,7 @@ Tin Ingot,128000
 Tin Ore,6250
 Titanium Ingot,127000
 Titanium Ore,9250
-Token of Friendship,12700000
+Token of Friendship,775000000
 Tomato,2810
 Tomato Seed,1550
 Top-quality Cooking Honey,373000
@@ -1974,6 +2022,10 @@ Translucent Ocean Sapphire Earring,318000
 Translucent Ocean Sapphire Necklace,885000
 Tree Spirit Belt,3680000
 Tridana Giant Clam Shellfish,177000
+Trina Knight Barding,395000000
+Trina Knight Champron,220000000
+Trina Knight Horse Gear Set,1020000000
+Trina Knight Saddle,264000000
 Troll Blood,24700
 Truffle Mushroom,187000
 Truffle Mushroom Hypha,18700000
@@ -2080,7 +2132,7 @@ Yagakmu Sura Katana,7800000
 Yak Blood,22000
 Yak Hide,21700
 Yak Meat,17500
-Yellow Flower,10200
+Yellow Flower,26200
 Youngji Mushroom,28000
 Yuria Amulet,236000
 Yuria Axe,236000
@@ -2111,9 +2163,495 @@ Yuria Shortsword,236000
 Yuria Slayer,236000
 Yuria Staff,236000
 Yuria Swallowtail Fan,236000
-Zereth Armor,68500
+Zereth Armor,1740000000
 Zereth Gloves,44700
 Zereth Helmet,69000
 Zereth Shoes,41900
 Zinc Ingot,102000
 Zinc Ore,6250
+[Archer] Crayodel Soldier Hat,220000000
+[Archer] Crayodel Soldier Outfit Set,1100000000
+[Archer] Gierach Classic Set,1630000000
+[Archer] Gierach Gloves,176000000
+[Archer] Gierach Greatbow,395000000
+[Archer] Gierach Shoes,176000000
+[Archer] Ignis Armor,880000000
+[Archer] Ignis Classic Set,1630000000
+[Archer] Ignis Crossbow,330000000
+[Archer] Ignis Helmet,220000000
+[Archer] Ignis Ra'ghon,199000000
+[Archer] Karlstein Armor,880000000
+[Archer] Karlstein Classic Set,1630000000
+[Archer] Karlstein Hat,220000000
+[Archer] Karlstein Ra'ghon,199000000
+[Berserker] Anemos Armor,880000000
+[Berserker] Anemos Outfit Set,1100000000
+[Berserker] Arctic Fang Helmet,220000000
+[Berserker] Bolyn Axe,330000000
+[Berserker] Cavaro Axe,330000000
+[Berserker] Crayodel Soldier Hat,220000000
+[Berserker] Crimson Knight Helmet,220000000
+[Berserker] Crimson Shadow Knight Helmet,220000000
+[Berserker] Crown Eagle Armor,880000000
+[Berserker] Crown Eagle Ornamental Knot,199000000
+[Berserker] Gavi Regan Armor,880000000
+[Berserker] Gavi Regan Classic Set,1630000000
+[Berserker] Gavi Regan Iron Buster,395000000
+[Berserker] Gavi Regan Ornamental Knot,199000000
+[Berserker] Heidel Masquerade Phantom Mask,220000000
+[Berserker] Jungle Beast Armor,880000000
+[Berserker] Jungle Beast Axe,330000000
+[Berserker] Jungle Beast Classic Set,1630000000
+[Berserker] Jungle Beast Helmet,220000000
+[Berserker] Jungle Beast Ornamental Knot,199000000
+[Berserker] Karlstein Axe,330000000
+[Berserker] Onyx Jaguar Armor,880000000
+[Berserker] Onyx Jaguar Helmet,220000000
+[Berserker] Onyx Jaguar Outfit Set,1100000000
+[Berserker] Vediras Outfit Set,1100000000
+[Corsair] Bloody Dress,750000000
+[Corsair] Bloody Shoes,176000000
+[Corsair] Spring Blossom Headpiece,220000000
+[Dark Knight] Angelic Queen Outfit Set (No Stockings),1100000000
+[Dark Knight] Angelic Queen Shoes,176000000
+[Dark Knight] Crown Eagle Armor,880000000
+[Dark Knight] Crown Eagle Classic Set,1630000000
+[Dark Knight] Crown Eagle Ornamental Knot,199000000
+[Dark Knight] Crown Eagle Vediant,395000000
+[Dark Knight] Demonic Queen Armor (No Stockings),705000000
+[Dark Knight] Glorious Shudad Armor,880000000
+[Dark Knight] Glorious Shudad Classic Set,1630000000
+[Dark Knight] Glorious Shudad Ornamental Knot,199000000
+[Dark Knight] Secrua Ornamental Knot,199000000
+[Dark Knight] Secrua Shoes,176000000
+[Dark Knight] Stella Classic Set,1630000000
+[Dark Knight] Stella Ornamental Knot,199000000
+[Dark Knight] Stella Shoes,176000000
+[Dark Knight] Stella Vediant,395000000
+[Drakania] Arditeir Outfit Set,1100000000
+[Drakania] Bloody Dress,750000000
+[Drakania] Bloody Shoes,176000000
+[Guardian] Arditeir Outfit Set,1100000000
+[Guardian] Bloody Dress,750000000
+[Guardian] Bloody Gloves,176000000
+[Guardian] Bloody Outfit Set,1100000000
+[Guardian] Bloody Shoes,176000000
+[Guardian] Cantabile Headband,220000000
+[Guardian] Cantabile Outfit Set,1100000000
+[Guardian] Crayodel Soldier Hat,220000000
+[Guardian] Crayodel Soldier Outfit Set,1100000000
+[Guardian] Crayodel Soldier Uniform,880000000
+[Guardian] Noel Outfit Set,1100000000
+[Guardian] Rosa De Sharon Clothes,705000000
+[Guardian] Rosa De Sharon Outfit Set,1100000000
+[Guardian] Rosa De Sharon Shoes,176000000
+[Guardian] Spring Blossom Outfit Set,1100000000
+[Guardian] Spring Blossom Shoes,176000000
+[Guardian] Vediras Hood,220000000
+[Guardian] Vediras Outfit Set,1100000000
+[Hashashin] Cantabile Outfit Set,1100000000
+[Hashashin] Marine Romance Hat,220000000
+[Hashashin] Noel Clothes,880000000
+[Hashashin] Noel Outfit Set,1100000000
+[Hunting] Beginner Matchlock,31600000
+[Hunting] Master Matchlock,545000000
+[Kunoichi] Crayodel Soldier Hat,220000000
+[Kunoichi] Crayodel Soldier Outfit Set,1100000000
+[Kunoichi] Crayodel Soldier Uniform,880000000
+[Kunoichi] Crown Eagle Armor,880000000
+[Kunoichi] Crown Eagle Classic Set,1630000000
+[Kunoichi] Crown Eagle Kunai,199000000
+[Kunoichi] Crown Eagle Sah Chakram,395000000
+[Kunoichi] Gloomy Fox Clothes,880000000
+[Kunoichi] Gloomy Fox Headdress,220000000
+[Kunoichi] Karin Armor,880000000
+[Kunoichi] Karin Classic Set,1630000000
+[Kunoichi] Karin Helmet,220000000
+[Kunoichi] Karin Kunai,199000000
+[Kunoichi] Karin Shortsword,330000000
+[Kunoichi] Noel Clothes,705000000
+[Kunoichi] Noel Outfit Set,1100000000
+[Kunoichi] Pila Fe Outlaw Clothes,705000000
+[Lahn] Blanchard Headpiece,220000000
+[Lahn] Coco-Nutty Pirates Armor,530000000
+[Lahn] Coco-Nutty Pirates Crimson Glaives,395000000
+[Lahn] Coco-Nutty Pirates Gloves,176000000
+[Lahn] Coco-Nutty Pirates Noble Sword,199000000
+[Lahn] Coco-Nutty Pirates Shoes,176000000
+[Lahn] Marine Romance Clothes,705000000
+[Lahn] Marine Romance Hat,220000000
+[Lahn] Marine Romance Outfit Set,1100000000
+[Lahn] Marine Romance Shoes,176000000
+[Lahn] Noel Clothes,705000000
+[Lahn] Noel Hat,220000000
+[Lahn] Noel Shoes,176000000
+[Lahn] Ruby Floretta Classic Set,1630000000
+[Lahn] Ruby Floretta Clothes,880000000
+[Maegu] Moonlit Silver Armor,530000000
+[Maegu] Moonlit Silver Gloves,176000000
+[Maegu] Moonlit Silver Shoes,176000000
+[Maegu] Rosa De Sharon Outfit Set,1100000000
+[Maegu] Rosa De Sharon Shoes,176000000
+[Maegu] Salanar Armor,530000000
+[Maehwa] Blushing Maiden Classic Set,1630000000
+[Maehwa] Blushing Maiden Gloves,176000000
+[Maehwa] Blushing Maiden Horn Bow,199000000
+[Maehwa] Blushing Maiden Kerispear,395000000
+[Maehwa] Blushing Maiden Shoes,176000000
+[Maehwa] Calpheon Noble Dress,294000
+[Maehwa] Crayodel Soldier Hat,220000000
+[Maehwa] Crown Eagle Armor,880000000
+[Maehwa] Crown Eagle Classic Set,1630000000
+[Maehwa] Crown Eagle Horn Bow,199000000
+[Maehwa] Crown Eagle Kerispear,395000000
+[Maehwa] Demonic Queen Armor,705000000
+[Maehwa] Demonic Queen Helmet,220000000
+[Maehwa] Demonic Queen Outfit Set,1100000000
+[Maehwa] Demonic Queen Shoes,176000000
+[Maehwa] Glorious Shudad Armor,880000000
+[Maehwa] Glorious Shudad Classic Set,1630000000
+[Maehwa] Glorious Shudad Horn Bow,199000000
+[Maehwa] Hwasun Valley Gloves,176000000
+[Maehwa] Hwasun Valley Helmet,220000000
+[Maehwa] Hwasun Valley Horn Bow,199000000
+[Maehwa] Hwasun Valley Kerispear,395000000
+[Maehwa] Hwasun Valley Shoes,176000000
+[Maehwa] Jegrina Classic Set,1630000000
+[Maehwa] Jegrina Helmet,220000000
+[Maehwa] Jegrina Horn Bow,199000000
+[Maehwa] Jegrina Shoes,176000000
+[Maehwa] Karlstein Classic Set,1630000000
+[Maehwa] Karlstein Hat,220000000
+[Maehwa] Karlstein Horn Bow,199000000
+[Maehwa] Karlstein Shoes,176000000
+[Maehwa] Lucien Blanc Horn Bow,199000000
+[Maehwa] Lucien Blanc Kerispear,395000000
+[Maehwa] Lucien Blanc Shoes,176000000
+[Maehwa] Peach Blossom Gloves,176000000
+[Maehwa] Peach Blossom Shoes,176000000
+[Maehwa] Pila Fe Outlaw Hat,220000000
+[Maehwa] Pila Fe Outlaw Shoes,176000000
+[Maehwa] Tea Flower Outfit Set,1100000000
+[Maehwa] Tyrie Armor,530000000
+[Maehwa] Tyrie Blade,330000000
+[Maehwa] Tyrie Classic Set (Long),1630000000
+[Maehwa] Tyrie Classic Set (Short),1630000000
+[Maehwa] Tyrie Gloves,176000000
+[Maehwa] Tyrie Helmet,220000000
+[Maehwa] Tyrie Horn Bow,199000000
+[Maehwa] Tyrie Shoes (Long),176000000
+[Maehwa] Tyrie Shoes (Short),176000000
+[Manor] Stuffed Coral Stoneback Crab,59000000
+[Manor] Stuffed Golden Leaf Snake,109000000
+[Musa] Acher Guard Classic Set,1630000000
+[Musa] Acher Guard Helmet,220000000
+[Musa] Acher Guard Horn Bow,199000000
+[Musa] Arctic Fang Helmet,220000000
+[Musa] Atanis Helmet,220000000
+[Musa] Bolyn Classic Set,1630000000
+[Musa] Bolyn Crescent Blade,395000000
+[Musa] Bolyn Horn Bow,199000000
+[Musa] Crown Eagle Armor,880000000
+[Musa] Crown Eagle Classic Set,1630000000
+[Musa] Crown Eagle Crescent Blade,395000000
+[Musa] Crown Eagle Horn Bow,199000000
+[Musa] Gavi Regan Armor,880000000
+[Musa] Gavi Regan Classic Set,1630000000
+[Musa] Gavi Regan Crescent Blade,395000000
+[Musa] Gavi Regan Horn Bow,199000000
+[Musa] Goldscale Dragoon Gloves,176000000
+[Musa] Goldscale Dragoon Horn Bow,199000000
+[Musa] Leonidas Armor,880000000
+[Musa] Leonidas Helmet,220000000
+[Musa] Leonidas Outfit Set,1100000000
+[Musa] Noel Hat,220000000
+[Musa] Palgong Armor,880000000
+[Musa] Palgong Classic Set,1630000000
+[Musa] Palgong Crescent Blade,395000000
+[Musa] Palgong Horn Bow,199000000
+[Musa] Red Robe Armor,880000000
+[Musa] Red Robe Blade,330000000
+[Musa] Red Robe Classic Set,1630000000
+[Musa] Red Robe Helmet,220000000
+[Musa] Red Robe Horn Bow,199000000
+[Musa] Sedic Outfit Set,1100000000
+[Mystic] Angelic Queen Helmet,220000000
+[Mystic] Angelic Queen Outfit Set (No Stockings),1100000000
+[Mystic] Angelic Queen Shoes,176000000
+[Mystic] Crown Eagle Armor,880000000
+[Mystic] Crown Eagle Cestus,395000000
+[Mystic] Crown Eagle Classic Set,1630000000
+[Mystic] Crown Eagle Vambrace,199000000
+[Mystic] Demonic Queen Outfit Set,1100000000
+[Mystic] Demonic Queen Outfit Set (No Stockings),1100000000
+[Mystic] Gloomy Fox Clothes,880000000
+[Mystic] Gloomy Fox Headdress,220000000
+[Mystic] Gloomy Fox Outfit Set,1100000000
+[Mystic] Glorious Shudad Armor,880000000
+[Mystic] Glorious Shudad Classic Set,1630000000
+[Mystic] Glorious Shudad Vambrace,199000000
+[Mystic] Karlstein Vambrace,69000000
+[Mystic] New Year Hanbok Clothes,705000000
+[Mystic] New Year Hanbok Hat,220000000
+[Mystic] New Year Hanbok Outfit Set,1100000000
+[Mystic] New Year Hanbok Shoes,176000000
+[Mystic] Noel Hat,220000000
+[Mystic] Vediras Clothes,880000000
+[Mystic] Vediras Outfit Set,1100000000
+[Ninja] Acher Guard Shortsword,330000000
+[Ninja] Arctic Fang Helmet,220000000
+[Ninja] Arctic Fang Outfit Set,1100000000
+[Ninja] Durandal Helmet,220000000
+[Ninja] Epheria Marine Helmet,220000000
+[Ninja] Glorious Shudad Sura Katana,395000000
+[Ninja] Kibelius Armor,880000000
+[Ninja] Kibelius Classic Set,1630000000
+[Ninja] Kibelius Divinus Armor,880000000
+[Ninja] Kibelius Divinus Classic Set,1630000000
+[Ninja] Kibelius Divinus Premium Set,2020000000
+[Ninja] Kibelius Kunai,199000000
+[Ninja] Kibelius Premium Set,2020000000
+[Ninja] Kibelius Sura Katana,395000000
+[Ninja] Lahr Arcien Armor,705000000
+[Ninja] Lahr Arcien Classic Set,1630000000
+[Ninja] Lahr Arcien Helmet,220000000
+[Ninja] Lahr Arcien Kunai,199000000
+[Ninja] Lahr Arcien Shoes,176000000
+[Ninja] Lahr Arcien Shortsword,330000000
+[Ninja] Sedic Bandana,220000000
+[Ninja] Sedic Outfit Set,1100000000
+[Ninja] Warhawk Armor,1100000000
+[Ninja] Warhawk Classic Set,1630000000
+[Ninja] Warhawk Kunai,199000000
+[Ninja] Warhawk Sura Katana,395000000
+[Nova] Aquila Morning Star,330000000
+[Nova] Aquila Quoratum,199000000
+[Nova] Secrua Quoratum,199000000
+[Nova] Secrua Sting,395000000
+[Ranger] Angelic Queen Shoes,176000000
+[Ranger] Atanis Armor,705000000
+[Ranger] Blanchard Gloves,176000000
+[Ranger] Blanchard Shoes,176000000
+[Ranger] Cantabile Headband,220000000
+[Ranger] Cantabile Outfit Set,1100000000
+[Ranger] Clead Armor,530000000
+[Ranger] Crown Eagle Armor,880000000
+[Ranger] Crown Eagle Classic Set,1630000000
+[Ranger] Crown Eagle Dagger,199000000
+[Ranger] Crown Eagle Kamasylven Sword,395000000
+[Ranger] Demonic Queen Armor,705000000
+[Ranger] Demonic Queen Helmet,220000000
+[Ranger] Demonic Queen Outfit Set,1100000000
+[Ranger] Demonic Queen Shoes,176000000
+[Ranger] Eternal Snow Armor,530000000
+[Ranger] Karlstein Classic Set,1630000000
+[Ranger] Karlstein Dagger,199000000
+[Ranger] Karlstein Shoes,176000000
+[Ranger] Lahr Arcien Dagger (R),199000000
+[Ranger] Lahr Arcien Dagger (W),199000000
+[Ranger] Lahr Arcien Shoes (R),176000000
+[Ranger] Lahr Arcien Shoes (W),176000000
+[Ranger] Tea Flower Bandana,220000000
+[Ranger] Tyrie Armor,530000000
+[Ranger] Tyrie Longbow,330000000
+[Sage] Calpheon Noble Suit,188000
+[Sage] Karlstein Kyve,179000000
+[Sage] Superius Outfit Set,1100000000
+[Shai] Cantabile Clothes,880000000
+[Shai] Cantabile Headband,220000000
+[Shai] Cantabile Outfit Set,1100000000
+[Shai] Noel Clothes,705000000
+[Shai] Salanar Vitclari,199000000
+[Sorceress] Angelic Queen Helmet,220000000
+[Sorceress] Angelic Queen Outfit Set,1100000000
+[Sorceress] Angelic Queen Outfit Set (No Stockings),1100000000
+[Sorceress] Angelic Queen Shoes,176000000
+[Sorceress] Bern Amulet,330000000
+[Sorceress] Bern Armor,530000000
+[Sorceress] Bern Classic Set,1630000000
+[Sorceress] Blanchard Shoes,176000000
+[Sorceress] Cavaro Amulet,330000000
+[Sorceress] Cavaro Armor,530000000
+[Sorceress] Cavaro Classic Set,1630000000
+[Sorceress] Cavaro Gloves,176000000
+[Sorceress] Cavaro Helmet,220000000
+[Sorceress] Cavaro Shoes,176000000
+[Sorceress] Cavaro Talisman,199000000
+[Sorceress] Glorious Shudad Armor,880000000
+[Sorceress] Glorious Shudad Classic Set,1630000000
+[Sorceress] Glorious Shudad Talisman,199000000
+[Sorceress] Kyrill Amulet,330000000
+[Sorceress] Kyrill Helmet,220000000
+[Sorceress] Marine Romance Hat,220000000
+[Sorceress] Pila Fe Outlaw Shoes,176000000
+[Sorceress] Sekrah Armor,880000000
+[Sorceress] Sekrah Outfit Set,1100000000
+[Sorceress] Tea Flower Bandana,220000000
+[Sorceress] Tea Flower Outfit Set,1100000000
+[Sorceress] Terrminé Helmet,220000000
+[Striker] Arctic Fang Armor,880000000
+[Striker] Arctic Fang Helmet,220000000
+[Striker] Arctic Fang Outfit Set,1100000000
+[Striker] Cantabile Clothes,530000000
+[Striker] Marine Romance Clothes,530000000
+[Striker] Marine Romance Hat,220000000
+[Striker] Marine Romance Outfit Set,1100000000
+[Striker] Nouse's Shard Armor,880000000
+[Striker] Nouse's Shard Classic Set,1630000000
+[Striker] Nouse's Shard Gardbrace,395000000
+[Striker] Nouse's Shard Vambrace,199000000
+[Striker] Onyx Jaguar Classic Set,1630000000
+[Striker] Onyx Jaguar Gardbrace,395000000
+[Striker] Onyx Jaguar Shoes,176000000
+[Striker] Onyx Jaguar Vambrace,199000000
+[Striker] Rakshasa Gardbrace,395000000
+[Striker] Rakshasa Gloves,176000000
+[Tamer] Angelic Queen Helmet,220000000
+[Tamer] Angelic Queen Outfit Set (No Stockings),1100000000
+[Tamer] Angelic Queen Shoes,176000000
+[Tamer] Crown Eagle Armor,880000000
+[Tamer] Crown Eagle Celestial Bo Staff,395000000
+[Tamer] Crown Eagle Classic Set,1630000000
+[Tamer] Crown Eagle Trinket,199000000
+[Tamer] Grolia Hat,220000000
+[Tamer] Karin Armor,880000000
+[Tamer] Karin Classic Set,1630000000
+[Tamer] Karin Trinket,199000000
+[Tamer] Karlstein Classic Set,1630000000
+[Tamer] Karlstein Shoes,176000000
+[Tamer] Karlstein Trinket,199000000
+[Tamer] New Year Hanbok Hat,220000000
+[Tamer] Pila Fe Outlaw Clothes,705000000
+[Tamer] White Dragon Armor,705000000
+[Tamer] White Dragon Classic Set,1630000000
+[Tamer] White Dragon Premium Set,2020000000
+[Tamer] White Dragon Shoes,176000000
+[Tamer] White Dragon Shortsword,330000000
+[Tamer] White Dragon Trinket,199000000
+[Valkyrie] Arrendo Classic Set,1630000000
+[Valkyrie] Arrendo Lancia,395000000
+[Valkyrie] Arrendo Shield,199000000
+[Valkyrie] Arrendo Shoes,176000000
+[Valkyrie] Blanchard Gloves,176000000
+[Valkyrie] Blanchard Headpiece,220000000
+[Valkyrie] Blanchard Shoes,176000000
+[Valkyrie] Bloody Dress,750000000
+[Valkyrie] Cavaro Armor,530000000
+[Valkyrie] Cavaro Classic Set,1630000000
+[Valkyrie] Cavaro Longsword,330000000
+[Valkyrie] Crown Eagle Armor,880000000
+[Valkyrie] Crown Eagle Classic Set,1630000000
+[Valkyrie] Crown Eagle Lancia,395000000
+[Valkyrie] Crown Eagle Shield,199000000
+[Valkyrie] Dante Armor,880000000
+[Valkyrie] Dante Lancia,395000000
+[Valkyrie] Dante Shield,199000000
+[Valkyrie] Demonic Queen Helmet,220000000
+[Valkyrie] Demonic Queen Outfit Set,1100000000
+[Valkyrie] Demonic Queen Shoes,176000000
+[Valkyrie] Gunnr Lucirian Helmet,220000000
+[Valkyrie] Jousting Classic Set,1630000000
+[Valkyrie] Jousting Lancia,395000000
+[Valkyrie] Jousting Shield,199000000
+[Valkyrie] Karin Longsword,330000000
+[Valkyrie] Karlstein Classic Set,1630000000
+[Valkyrie] Karlstein Hat,220000000
+[Valkyrie] Karlstein Shield,199000000
+[Valkyrie] Karlstein Shoes,176000000
+[Valkyrie] Lucirian Shoes,176000000
+[Valkyrie] New Year Hanbok Hat,220000000
+[Valkyrie] New Year Hanbok Outfit Set,1100000000
+[Valkyrie] New Year Hanbok Shoes,176000000
+[Valkyrie] Rosa De Sharon Headpiece,220000000
+[Valkyrie] Rosa De Sharon Shoes,176000000
+[Valkyrie] Vediras Clothes,880000000
+[Valkyrie] Vediras Hood,220000000
+[Valkyrie] Vediras Outfit Set,1100000000
+[Warrior] Acher Guard Longsword,330000000
+[Warrior] Bolyn Classic Set,1630000000
+[Warrior] Bolyn Greatsword,395000000
+[Warrior] Bolyn Shield,199000000
+[Warrior] Calpheon Noble Suit,282000
+[Warrior] Cantabile Clothes,530000000
+[Warrior] Crayodel Soldier Uniform,880000000
+[Warrior] Crown Eagle Armor,880000000
+[Warrior] Crown Eagle Greatsword,395000000
+[Warrior] Evergart Longsword,330000000
+[Warrior] Glorious Shudad Armor,880000000
+[Warrior] Glorious Shudad Classic Set,1630000000
+[Warrior] Glorious Shudad Shield,199000000
+[Warrior] Grave Keeper Gloves,176000000
+[Warrior] Grave Keeper Hat,220000000
+[Warrior] Grotevant Armor,880000000
+[Warrior] Grotevant Greatsword,395000000
+[Warrior] Kibelius Classic Set,1630000000
+[Warrior] Kibelius Divinus Classic Set,1630000000
+[Warrior] Kibelius Helmet,220000000
+[Warrior] Kibelius Shield,199000000
+[Warrior] Kibelius Shoes,176000000
+[Warrior] Lahr Arcien Armor,705000000
+[Warrior] Lahr Arcien Classic Set,1630000000
+[Warrior] Lahr Arcien Helmet,220000000
+[Warrior] Lahr Arcien Longsword,330000000
+[Warrior] Lahr Arcien Shield,199000000
+[Warrior] Lahr Arcien Shoes,176000000
+[Warrior] Millen Fedora Classic Set,1630000000
+[Warrior] Millen Fedora Clothes,530000000
+[Warrior] Millen Fedora Gloves,176000000
+[Warrior] Millen Fedora Shield,199000000
+[Warrior] Millen Fedora Shoes,176000000
+[Warrior] Ossa Cerberi Armor,530000000
+[Warrior] Ossa Cerberi Gloves,176000000
+[Warrior] Ossa Cerberi Greatsword,395000000
+[Warrior] Ossa Cerberi Shoes,176000000
+[Warrior] Pila Fe Outlaw Clothes,880000000
+[Warrior] Pila Fe Outlaw Hat,220000000
+[Warrior] Superius Helmet,220000000
+[Warrior] Superius Outfit Set,1100000000
+[Warrior] Vestillio Helmet,220000000
+[Witch] Angelic Queen Armor (No Stockings),705000000
+[Witch] Angelic Queen Helmet,220000000
+[Witch] Angelic Queen Outfit Set (No Stockings),1100000000
+[Witch] Angelic Queen Shoes,176000000
+[Witch] Blanchard Gloves,176000000
+[Witch] Blanchard Shoes,176000000
+[Witch] Demonic Queen Outfit Set,1100000000
+[Witch] Demonic Queen Shoes,176000000
+[Witch] Heidel Masquerade Dress,880000000
+[Witch] Heidel Masquerade Outfit Set,1100000000
+[Witch] Heidel Masquerade Phantom Mask,220000000
+[Witch] Karin Armor,880000000
+[Witch] Karin Staff,330000000
+[Witch] New Year Hanbok Clothes,705000000
+[Witch] New Year Hanbok Hat,220000000
+[Witch] New Year Hanbok Outfit Set,1100000000
+[Witch] New Year Hanbok Shoes,176000000
+[Witch] Pila Fe Outlaw Clothes,705000000
+[Witch] Pila Fe Outlaw Hat,220000000
+[Witch] Pila Fe Outlaw Shoes,176000000
+[Witch] Rosa De Sharon Headpiece,220000000
+[Witch] Rosa De Sharon Shoes,176000000
+[Wizard] Cantabile Headband,220000000
+[Wizard] Corvicanus Dagger,199000000
+[Wizard] Corvicanus Godr Sphera,395000000
+[Wizard] Crayodel Soldier Uniform,880000000
+[Wizard] Karlstein Armor,880000000
+[Wizard] Karlstein Classic Set,1630000000
+[Wizard] Karlstein Hat,220000000
+[Wizard] Noel Clothes,880000000
+[Wizard] Noel Outfit Set,1100000000
+[Wizard] Pila Fe Outlaw Clothes,880000000
+[Wizard] Pila Fe Outlaw Hat,220000000
+[Wizard] Sage's Memory Classic Set,1630000000
+[Wizard] Sage's Memory Clothes,880000000
+[Wizard] Sage's Memory Dagger,199000000
+[Wizard] Sage's Memory Godr Sphera,395000000
+[Woosa] Moonflower Armor,530000000
+[Woosa] Moonflower Do Stave,199000000
+[Woosa] Moonflower Gloves,176000000
+[Woosa] Moonflower Shoes,176000000
+[Woosa] Rosa De Sharon Clothes,705000000
+[Woosa] Rosa De Sharon Headpiece,220000000
+[Woosa] Rosa De Sharon Outfit Set,1100000000
+[Woosa] Rosa De Sharon Shoes,176000000
+[Woosa] Salanar Outfit Set,1100000000
