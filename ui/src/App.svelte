@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, afterUpdate } from 'svelte';
 
   let state = {
     running: false,
@@ -18,6 +18,143 @@
   let dbStats = null;
   let dbLoading = false;
   let ocrTick = 0;
+  let confirmDeleteId = null;
+  let sessionDetail = null;
+  let sessionDetailLoading = false;
+
+  // Chart constants (SVG inner area)
+  const CW = 460, CH = 150;
+
+  const CHART_COLORS = [
+    '#d4a017', '#50c878', '#4a9eff', '#e05050', '#c870e0',
+    '#50c8c8', '#e09050', '#a0c850', '#e05090', '#8090e0',
+  ];
+
+  let chartMode = 'silver'; // 'silver' | 'items'
+
+  $: timelineChart = buildTimelineChart(sessionDetail?.timeline ?? []);
+  $: itemsChart = buildItemsChart(sessionDetail?.timeline ?? []);
+  $: maxItemValue = Math.max(...(sessionDetail?.items ?? []).map(i => i.value), 1);
+
+  function buildTimelineChart(timeline) {
+    if (!timeline.length) return null;
+    const maxT = Math.max(...timeline.map(e => e.elapsed_seconds), 1);
+    const totalV = timeline.reduce((s, e) => s + e.value, 0);
+    if (totalV === 0) return null;
+
+    let cum = 0;
+    const pts = [];
+    for (const e of timeline) {
+      cum += e.value;
+      pts.push([
+        (e.elapsed_seconds / maxT) * CW,
+        CH - (cum / totalV) * CH,
+      ]);
+    }
+
+    const polyline = pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+    const area = `0,${CH} ${polyline} ${CW},${CH}`;
+
+    const yLabels = [0, 0.5, 1].map(f => ({
+      y: CH - f * CH,
+      text: fmtSilver(totalV * f),
+    }));
+    const xLabels = [0, 0.25, 0.5, 0.75, 1].map(f => ({
+      x: f * CW,
+      text: fmtElapsed(maxT * f),
+    }));
+
+    return { polyline, area, yLabels, xLabels };
+  }
+
+  function buildItemsChart(timeline) {
+    if (!timeline.length) return null;
+    const maxT = Math.max(...timeline.map(e => e.elapsed_seconds), 1);
+
+    // Group by item name
+    const byItem = {};
+    for (const e of timeline) {
+      (byItem[e.item_name] ??= []).push(e);
+    }
+
+    // Sort by total qty desc, cap at top 10
+    let items = Object.entries(byItem).map(([name, evts]) => ({
+      name,
+      events: evts.slice().sort((a, b) => a.elapsed_seconds - b.elapsed_seconds),
+      total: evts.reduce((s, e) => s + e.quantity, 0),
+    }));
+    items.sort((a, b) => b.total - a.total);
+    items = items.slice(0, 10);
+
+    // Per-item normalisation: if total > 10 000, show per-1 000
+    items = items.map(item => ({ ...item, scale: item.total > 10000 ? 1000 : 1 }));
+
+    // Shared Y max across normalised values
+    const maxY = Math.max(...items.map(i => i.total / i.scale), 1);
+
+    // Build step-function polylines (discrete loot events)
+    const series = items.map((item, idx) => {
+      let cum = 0;
+      let prevY = CH;
+      const pts = [`0,${CH}`];
+      for (const e of item.events) {
+        const x = (e.elapsed_seconds / maxT) * CW;
+        // horizontal segment at previous level, then jump up
+        pts.push(`${x.toFixed(1)},${prevY.toFixed(1)}`);
+        cum += e.quantity;
+        const y = CH - (cum / item.scale / maxY) * CH;
+        pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+        prevY = y;
+      }
+      pts.push(`${CW},${prevY.toFixed(1)}`); // extend to right edge
+      return {
+        name: item.name,
+        points: pts.join(' '),
+        total: item.total,
+        scale: item.scale,
+        color: CHART_COLORS[idx % CHART_COLORS.length],
+      };
+    });
+
+    const yLabels = [0, 0.5, 1].map(f => ({
+      y: CH - f * CH,
+      text: Math.round(maxY * f).toLocaleString(),
+    }));
+    const xLabels = [0, 0.25, 0.5, 0.75, 1].map(f => ({
+      x: f * CW,
+      text: fmtElapsed(maxT * f),
+    }));
+
+    return { series, yLabels, xLabels };
+  }
+
+  function fmtElapsed(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    if (h > 0) return `${h}h${m}m`;
+    if (m > 0) return `${m}m${s}s`;
+    return `${s}s`;
+  }
+
+  async function openSessionDetail(id) {
+    chartMode = 'silver';
+    sessionDetailLoading = true;
+    sessionDetail = null;
+    try {
+      const res = await fetch(`/api/session_detail?id=${id}`);
+      sessionDetail = await res.json();
+    } catch (_) {
+      sessionDetail = { session: null, timeline: [], items: [] };
+    } finally {
+      sessionDetailLoading = false;
+    }
+  }
+
+  function closeSessionDetail() {
+    sessionDetail = null;
+    sessionDetailLoading = false;
+  }
 
   // Resizable panes
   let leftPct = 50;       // % width of left pane
@@ -97,9 +234,51 @@
     sidebarOpen = false;
   }
 
+  async function reloadDbStats() {
+    dbLoading = true;
+    dbStats = null;
+    try {
+      const res = await fetch('/api/db_stats');
+      dbStats = await res.json();
+    } catch (_) {
+      dbStats = { summary: {}, sessions: [], top_items: [] };
+    } finally {
+      dbLoading = false;
+    }
+  }
+
+  async function confirmDelete() {
+    if (confirmDeleteId == null) return;
+    await fetch('/api/delete_session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: confirmDeleteId }),
+    });
+    confirmDeleteId = null;
+    await reloadDbStats();
+  }
+
   function handleOverlayKey(e) {
     if (e.key === 'Escape') closeSidebar();
   }
+
+  let liveLogEl;
+  let liveLogAtBottom = true;
+  let modalEl;
+
+  function onLiveLogScroll() {
+    if (!liveLogEl) return;
+    liveLogAtBottom = liveLogEl.scrollHeight - liveLogEl.scrollTop - liveLogEl.clientHeight < 40;
+  }
+
+  afterUpdate(() => {
+    if (liveLogEl && liveLogAtBottom) {
+      liveLogEl.scrollTop = liveLogEl.scrollHeight;
+    }
+    if (confirmDeleteId != null && modalEl) {
+      modalEl.focus();
+    }
+  });
 
   onMount(() => {
     refresh();
@@ -109,6 +288,175 @@
 </script>
 
 <div class="ui-root">
+
+  <!-- Session detail overlay -->
+  {#if sessionDetailLoading || sessionDetail !== null}
+    <div class="detail-overlay">
+      <div class="detail-header">
+        <button class="icon-btn detail-back-btn" on:click={closeSessionDetail}>← Back</button>
+        {#if sessionDetail?.session}
+          <span class="detail-title">Session #{sessionDetail.session.id} · {sessionDetail.session.zone}</span>
+        {:else if sessionDetailLoading}
+          <span class="detail-title">Loading…</span>
+        {/if}
+      </div>
+
+      {#if sessionDetailLoading}
+        <div class="detail-loading">Loading…</div>
+      {:else if sessionDetail?.session}
+        <div class="detail-body">
+
+          <!-- Stats row -->
+          <div class="detail-stats">
+            <div class="detail-stat">
+              <div class="detail-stat-label">Started</div>
+              <div class="detail-stat-value">{sessionDetail.session.started_at?.slice(0, 16) ?? '—'}</div>
+            </div>
+            <div class="detail-stat">
+              <div class="detail-stat-label">Duration</div>
+              <div class="detail-stat-value mono">{sessionDetail.session.duration}</div>
+            </div>
+            <div class="detail-stat">
+              <div class="detail-stat-label">Avg / hr</div>
+              <div class="detail-stat-value gold mono">{fmtSilver(sessionDetail.session.avg_hour)}</div>
+            </div>
+            <div class="detail-stat">
+              <div class="detail-stat-label">Total Silver</div>
+              <div class="detail-stat-value gold mono">
+                {fmtSilver(sessionDetail.items.reduce((s, i) => s + i.value, 0))}
+              </div>
+            </div>
+          </div>
+
+          <!-- Chart section -->
+          {#if timelineChart}
+            <div class="detail-chart-header">
+              <div class="detail-section-label" style="margin: 0;">
+                {chartMode === 'silver' ? 'Silver Earned Over Time' : 'Items Obtained Over Time'}
+              </div>
+              <div class="chart-toggle">
+                <button
+                  class="chart-toggle-btn"
+                  class:chart-toggle-active={chartMode === 'silver'}
+                  on:click={() => chartMode = 'silver'}
+                >Silver</button>
+                <button
+                  class="chart-toggle-btn"
+                  class:chart-toggle-active={chartMode === 'items'}
+                  on:click={() => chartMode = 'items'}
+                >Items</button>
+              </div>
+            </div>
+
+            <div class="detail-chart-wrap">
+              {#if chartMode === 'silver'}
+                <svg class="detail-chart-svg" viewBox="0 0 {CW + 80} {CH + 50}">
+                  {#each timelineChart.yLabels as lbl}
+                    <line x1="60" y1={lbl.y + 10} x2={CW + 60} y2={lbl.y + 10} class="chart-grid" />
+                    <text x="56" y={lbl.y + 14} text-anchor="end" class="chart-label">{lbl.text}</text>
+                  {/each}
+                  <g transform="translate(60, 10)">
+                    <polygon points={timelineChart.area} class="chart-area" />
+                    <polyline points={timelineChart.polyline} class="chart-line" />
+                    <line x1="0" y1={CH} x2={CW} y2={CH} class="chart-axis" />
+                    <line x1="0" y1="0" x2="0" y2={CH} class="chart-axis" />
+                  </g>
+                  {#each timelineChart.xLabels as lbl}
+                    <text x={lbl.x + 60} y={CH + 30} text-anchor="middle" class="chart-label">{lbl.text}</text>
+                  {/each}
+                </svg>
+
+              {:else if itemsChart}
+                <svg class="detail-chart-svg" viewBox="0 0 {CW + 80} {CH + 50}">
+                  {#each itemsChart.yLabels as lbl}
+                    <line x1="60" y1={lbl.y + 10} x2={CW + 60} y2={lbl.y + 10} class="chart-grid" />
+                    <text x="56" y={lbl.y + 14} text-anchor="end" class="chart-label">{lbl.text}</text>
+                  {/each}
+                  <g transform="translate(60, 10)">
+                    {#each itemsChart.series as s}
+                      <polyline
+                        points={s.points}
+                        fill="none"
+                        stroke={s.color}
+                        stroke-width="1.5"
+                        stroke-linejoin="round"
+                        stroke-linecap="round"
+                      />
+                    {/each}
+                    <line x1="0" y1={CH} x2={CW} y2={CH} class="chart-axis" />
+                    <line x1="0" y1="0" x2="0" y2={CH} class="chart-axis" />
+                  </g>
+                  {#each itemsChart.xLabels as lbl}
+                    <text x={lbl.x + 60} y={CH + 30} text-anchor="middle" class="chart-label">{lbl.text}</text>
+                  {/each}
+                </svg>
+
+                <!-- Legend -->
+                <div class="chart-legend">
+                  {#each itemsChart.series as s}
+                    <div class="chart-legend-item">
+                      <span class="chart-legend-dot" style="background:{s.color}"></span>
+                      <span class="chart-legend-name" title={s.name}>{s.name}</span>
+                      {#if s.scale === 1000}
+                        <span class="chart-legend-unit">per 1K</span>
+                      {/if}
+                      <span class="chart-legend-total">×{s.total.toLocaleString()}</span>
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          {:else}
+            <div class="detail-no-timeline">No time-series data — recorded before tracking was added.</div>
+          {/if}
+
+          <!-- Items breakdown -->
+          <div class="detail-section-label" style="margin-top: 24px;">Items Collected</div>
+          <div class="detail-items">
+            {#each sessionDetail.items as item}
+              <div class="detail-item-row">
+                <span class="detail-item-name" title={item.item_name}>{item.item_name}</span>
+                <div class="detail-item-bar-wrap">
+                  <div class="detail-item-bar" style="width: {(item.value / maxItemValue * 100).toFixed(1)}%"></div>
+                </div>
+                <span class="detail-item-qty">×{item.quantity.toLocaleString()}</span>
+                <span class="detail-item-silver">{fmtSilver(item.value)}</span>
+              </div>
+            {/each}
+            {#if sessionDetail.items.length === 0}
+              <div class="db-empty">No items recorded for this session.</div>
+            {/if}
+          </div>
+
+        </div>
+      {:else}
+        <div class="detail-loading">Session not found.</div>
+      {/if}
+    </div>
+  {/if}
+
+  <!-- Delete confirmation modal -->
+  {#if confirmDeleteId != null}
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div class="modal-overlay" on:click={() => confirmDeleteId = null} on:keydown={(e) => e.key === 'Escape' && (confirmDeleteId = null)}>
+      <div
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        tabindex="-1"
+        bind:this={modalEl}
+        on:click|stopPropagation
+        on:keydown|stopPropagation={(e) => { if (e.key === 'Enter') confirmDelete(); else if (e.key === 'Escape') confirmDeleteId = null; }}
+      >
+        <div class="modal-title">Delete Session #{confirmDeleteId}?</div>
+        <div class="modal-body">This will permanently remove the session and all its loot data from the local database.</div>
+        <div class="modal-actions">
+          <button class="modal-btn-cancel" on:click={() => confirmDeleteId = null}>Cancel</button>
+          <button class="modal-btn-delete" on:click={confirmDelete}>Delete</button>
+        </div>
+      </div>
+    </div>
+  {/if}
 
   <!-- Sidebar overlay -->
   {#if sidebarOpen}
@@ -140,7 +488,7 @@
         class:active={sidebarPanel === 'database'}
         on:click={() => openSidebar('database')}
       >
-        Database
+        Sessions
       </button>
       <button
         class="nav-btn"
@@ -184,11 +532,18 @@
           <div class="db-section-label">Session History</div>
           <div class="db-sessions">
             {#each dbStats.sessions as s}
-              <div class="db-session">
+              <div
+                class="db-session db-session-clickable"
+                role="button"
+                tabindex="0"
+                on:click={() => openSessionDetail(s.id)}
+                on:keydown={(e) => { if (e.key === 'Enter') openSessionDetail(s.id); else if (e.key === 'Escape') closeSessionDetail(); }}
+              >
                 <div class="db-session-head">
                   <span class="db-session-id">#{s.id}</span>
                   <span class="db-session-zone">{s.zone}</span>
                   <span class="db-badge" class:db-badge-live={!s.ended_at}>{s.ended_at ? 'done' : 'live'}</span>
+                  <button class="db-delete-btn" on:click|stopPropagation={() => confirmDeleteId = s.id} title="Delete session">✕</button>
                 </div>
                 <div class="db-session-stats">
                   <span class="db-stat">
@@ -233,6 +588,16 @@
         <div class="settings-group">
           <h3>Calibration</h3>
           <button class="settings-btn" on:click={() => api('calibrate')}>Calibrate</button>
+        </div>
+
+        <div class="settings-group">
+          <h3>Items</h3>
+          <button
+            class="settings-btn"
+            disabled={state.market_updating}
+            on:click={() => api('update_market_prices')}
+          >{state.market_updating ? 'Fetching…' : 'Update'}</button>
+          <p class="settings-hint">Fetch market prices from Arsha.io.</p>
         </div>
 
         <div class="settings-group">
@@ -331,14 +696,18 @@
       <div class="panes-top" style="flex: 1; min-height: 0; display: flex;">
         <article style="width: {leftPct}%; min-width: 0;">
           <h2>LIVE LOG</h2>
-          <pre style="font-size: {state.items_font_size ?? 12}px">{(state.show_ocr ? state.logs : state.logs.filter(l => !l.includes('[OCR]'))).join('\n')}</pre>
+          <pre
+            bind:this={liveLogEl}
+            on:scroll={onLiveLogScroll}
+            style="font-size: {state.items_font_size ?? 12}px"
+          >{(state.show_ocr ? state.logs : state.logs.filter(l => !l.includes('[OCR]'))).join('\n')}</pre>
         </article>
 
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div class="drag-handle-h" on:mousedown={startDragH}></div>
 
         <article style="flex: 1; min-width: 0;">
-          <h2>SESSION TOTALS</h2>
+          <h2>SESSION TOTALS <span class="session-silver">{fmtSilver(state.session_silver ?? 0)}</span></h2>
           <pre style="font-size: {state.items_font_size ?? 12}px">{state.totals.map((t) => `${t.name} ×${t.qty}`).join('\n')}</pre>
         </article>
       </div>

@@ -18,6 +18,7 @@ from core.config import (
     ENV_PATH,
 )
 from core.parser import get_item_zone, is_dehkia_two_indicator, get_dehkia_two_upgrade
+from core.arsha_market_source import fetch_arsha_hotlist
 
 def main():
     log_window = None
@@ -177,6 +178,47 @@ def main():
     def get_db_stats():
         return local_store.get_db_stats()
 
+    def get_session_detail(session_id: int):
+        return local_store.get_session_detail(session_id)
+
+    def delete_session(session_id: int):
+        local_store.delete_session(session_id)
+
+    _ARSHA_CSV = Path(LOCAL_DB_PATH).resolve().parent.parent / "items" / "items.arsha.csv"
+
+    def _write_arsha_csv(prices: dict):
+        import csv
+        existing: dict[str, str] = {}
+        if _ARSHA_CSV.exists():
+            with _ARSHA_CSV.open(newline="", encoding="utf-8-sig") as f:
+                for row in csv.reader(f):
+                    if len(row) >= 2 and row[0].strip().lower() != "name":
+                        existing[row[0].strip()] = row[1].strip()
+        for name, value in prices.items():
+            if name and value > 0:
+                existing[name] = str(int(value))
+        with _ARSHA_CSV.open("w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["name", "value"])
+            for name in sorted(existing.keys()):
+                writer.writerow([name, existing[name]])
+
+    def update_market_prices():
+        def _run():
+            log_window._append_system("Fetching market prices from Arsha…")
+            try:
+                prices = fetch_arsha_hotlist()
+                if not prices:
+                    log_window._append_system("Market fetch returned no data.")
+                    return
+                _write_arsha_csv(prices)
+                log_window._append_system(f"Market prices updated — {len(prices)} items.")
+            except Exception as e:
+                log_window._append_system(f"Market fetch failed: {e}")
+            finally:
+                log_window._market_updating = False
+        threading.Thread(target=_run, daemon=True).start()
+
     # Create the log window with start/stop callbacks
     log_window = LogWindow(
         start_cb=start_session,
@@ -194,9 +236,12 @@ def main():
         get_font_size_cb=get_font_size,
         set_font_size_cb=set_font_size,
         get_db_stats_cb=get_db_stats,
+        get_session_detail_cb=get_session_detail,
+        delete_session_cb=delete_session,
         pause_cb=pause_session,
         resume_cb=resume_session,
         is_paused_cb=tracker.is_paused,
+        update_market_prices_cb=update_market_prices,
     )
 
     # Run tray, passing tracker methods

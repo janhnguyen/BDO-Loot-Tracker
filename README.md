@@ -1,10 +1,12 @@
 # BDO Loot Tracker
 
-A real-time loot tracking overlay for **Black Desert Online**. It watches your loot pickups via OCR, parses item names and quantities against a known CSV item list.
+An open source, real-time loot tracking overlay for **Black Desert Online**. It watches your loot pickups via OCR, parses item names and quantities against a known CSV item list.
 
 ---
 
 Download the latest version [here](https://github.com/janhnguyen/BDO-Loot-Tracker/releases).
+
+Questions, comments, or concerns? Get in contact with me through my [discord](https://discord.com/invite/uZYJfGphBP).
 
 ### Dependencies
 
@@ -16,9 +18,10 @@ Control Panel → Edit the system environment variables → Advanced → Environ
 
 ## Features
 
-- **Live loot log**     - timestamped entries appear as items are detected
-- **Local storage**     - events are saved to a local database by session
-- **Zone detection**    - zones are automatically displayed
+- **Live Loot Log** - timestamped items logged and tracked
+- **Local Database** - loot events are saved to SQLite by session with start/end times, duration, and silver per hour
+- **Detailed Session Viewer** - charts showing silver earned over time and items obtained over time, plus a full items breakdown sorted by silver value
+- **Zone Detection** - Grind spots are automatically detected
 
 ## Calibration
 
@@ -39,6 +42,6 @@ Controls:
 
 A debug image is saved to `helpers/calibration_debug.png` for verification.
 
-## Desktop UI (Svelte)
+## Desktop UI
 
 The tracker UI runs as a standalone desktop window (powered by `PySide6`) while still being served locally from `http://127.0.0.1:8765` in the background.

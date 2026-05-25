@@ -10,6 +10,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
+from .parser import get_item_value_for_zone
+
 # When frozen by PyInstaller, bundled resources live in sys._MEIPASS.
 # In development they live relative to this source file.
 _RESOURCE_ROOT = (
@@ -42,11 +44,14 @@ class LogWindow:
         get_font_size_cb=None,
         set_font_size_cb=None,
         get_db_stats_cb=None,
+        get_session_detail_cb=None,
+        delete_session_cb=None,
         show_ocr_pane_default: bool = False,
         ocr_pane_settings_changed_cb=None,
         pause_cb=None,
         resume_cb=None,
         is_paused_cb=None,
+        update_market_prices_cb=None,
     ):
         self.get_status_cb = get_status_cb
         self.start_cb = start_cb
@@ -60,10 +65,14 @@ class LogWindow:
         self.get_font_size_cb = get_font_size_cb
         self.set_font_size_cb = set_font_size_cb
         self.get_db_stats_cb = get_db_stats_cb
+        self.get_session_detail_cb = get_session_detail_cb
+        self.delete_session_cb = delete_session_cb
         self.ocr_pane_settings_changed_cb = ocr_pane_settings_changed_cb
         self.pause_cb = pause_cb
         self.resume_cb = resume_cb
         self.is_paused_cb = is_paused_cb
+        self.update_market_prices_cb = update_market_prices_cb
+        self._market_updating = False
 
         self.show_ocr = show_ocr_default
         self.show_ocr_pane = show_ocr_pane_default
@@ -73,6 +82,7 @@ class LogWindow:
 
         self._lock = threading.Lock()
         self._totals: dict[str, int] = {}
+        self._session_silver: float = 0.0
         self._logs: list[str] = []
         self._session_labels: dict[str, int] = {}
         self._selected_session = "No sessions"
@@ -89,10 +99,12 @@ class LogWindow:
     def add_event(self, event):
         ts = event.timestamp.strftime("%H:%M:%S")
         line = f"[{ts}] {event.item_name} ×{event.quantity}"
+        value = get_item_value_for_zone(event.item_name, event.zone) * event.quantity
         with self._lock:
             self._logs.append(line)
             self._logs = self._logs[-400:]
             self._totals[event.item_name] = self._totals.get(event.item_name, 0) + event.quantity
+            self._session_silver += value
 
     def add_raw_ocr(self, text):
         if not self.show_ocr and not self.show_ocr_pane:
@@ -126,6 +138,7 @@ class LogWindow:
     def _clear_totals(self):
         with self._lock:
             self._totals = {}
+            self._session_silver = 0.0
 
     def clear_totals(self):
         self._clear_totals()
@@ -233,12 +246,14 @@ class LogWindow:
                 "timer_seconds": timer_seconds,
                 "logs": self._logs[-250:],
                 "totals": [{"name": name, "qty": qty} for name, qty in totals],
+                "session_silver": self._session_silver,
                 "show_ocr": self.show_ocr,
                 "show_ocr_pane": self.show_ocr_pane,
                 "tracking_window_size": self.get_tracking_window_cb() if self.get_tracking_window_cb else 20,
                 "items_font_size": self.get_font_size_cb() if self.get_font_size_cb else 12,
                 "sessions": sessions,
                 "selected_session": self._selected_session,
+                "market_updating": self._market_updating,
             }
 
     def _handle_action(self, action: str, body: dict[str, Any]):
@@ -273,6 +288,14 @@ class LogWindow:
             self.set_font_size_cb(body.get("value", 12))
         elif action == "clear_totals":
             self._clear_totals()
+        elif action == "update_market_prices" and self.update_market_prices_cb:
+            if not self._market_updating:
+                self._market_updating = True
+                self.update_market_prices_cb()
+        elif action == "delete_session" and self.delete_session_cb:
+            session_id = body.get("session_id")
+            if session_id is not None:
+                self.delete_session_cb(int(session_id))
 
     def _make_handler(self):
         log_window = self
@@ -315,6 +338,21 @@ class LogWindow:
                 if self.path == "/api/db_stats":
                     stats = log_window.get_db_stats_cb() if log_window.get_db_stats_cb else {}
                     self._write_json(stats)
+                    return
+
+                if self.path.startswith("/api/session_detail"):
+                    from urllib.parse import urlparse, parse_qs
+                    params = parse_qs(urlparse(self.path).query)
+                    try:
+                        session_id = int(params.get("id", ["0"])[0])
+                    except (ValueError, IndexError):
+                        session_id = 0
+                    detail = (
+                        log_window.get_session_detail_cb(session_id)
+                        if log_window.get_session_detail_cb
+                        else {}
+                    )
+                    self._write_json(detail)
                     return
 
                 target = self.path.split("?", 1)[0]

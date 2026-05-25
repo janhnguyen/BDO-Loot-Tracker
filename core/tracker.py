@@ -25,6 +25,9 @@ _WINDOW_MAX = 30
 _SCROLL_MATCH_THRESHOLD = 25
 # Maximum scroll to check in pixels (full-res). Covers many simultaneous drops.
 _MAX_SCROLL_PX = 300
+# How many items must disappear from the visible frame before we treat it as
+# the region being covered rather than ordinary OCR noise (1–2 misses).
+_COVERAGE_DROP_THRESHOLD = 2
 
 
 class Tracker:
@@ -41,6 +44,11 @@ class Tracker:
         self._suppress_events_until = 0.0
         self._paused = False
         self._current_batch_overrides: dict[str, str] = {}
+
+        # Coverage detection state
+        self._visible_count: int = 0          # max items seen visible in the full frame
+        self._covered: bool = False           # True while the region appears covered
+        self._pre_coverage_frame: Image.Image | None = None  # last clean frame before coverage
 
         self._region_left = REGION_LEFT_PCT
         self._region_top = REGION_TOP_PCT
@@ -79,6 +87,9 @@ class Tracker:
             return
         self._paused = False
         self._suppress_events_until = time.monotonic() + SESSION_RESET_DELAY_SECONDS
+        self._visible_count = 0
+        self._covered = False
+        self._pre_coverage_frame = None
         self._running = True
         self._thread = threading.Thread(target=self._loop, daemon=True)
         self._thread.start()
@@ -178,6 +189,24 @@ class Tracker:
         out = out.filter(ImageFilter.MinFilter(3))
         return out
 
+    def _fire_events_from_strip(self, processed_img: Image.Image, shift_px: int) -> None:
+        pw, ph = processed_img.size
+        new_strip = processed_img.crop((0, ph - shift_px, pw, ph))
+        text = pytesseract.image_to_string(new_strip, config="--psm 6")
+        drops = parse_loot(text)
+        if drops:
+            self._current_batch_overrides = resolve_batch_zone_overrides(
+                [d[0] for d in drops]
+            )
+            for item_name, qty in drops:
+                self._on_event(LootEvent(
+                    item_name=item_name,
+                    quantity=qty,
+                    zone=self._zone,
+                    raw_text=text[:500],
+                    character=CHARACTER_NAME,
+                ))
+
     def _loop(self):
         prev_processed: Image.Image | None = None
 
@@ -199,31 +228,47 @@ class Tracker:
 
                 shift_px = self._detect_scroll_shift(prev_processed, processed_img)
 
-                # Always OCR the full frame for the raw debug log.
+                # Always OCR the full frame for the raw debug log and item count.
                 full_text = pytesseract.image_to_string(processed_img, config="--psm 6")
                 if full_text.strip():
                     self._on_ocr(full_text)
 
-                # Require the new strip to be at least one text-line tall (~20px).
-                if shift_px >= 20 and time.monotonic() >= self._suppress_events_until:
-                    # Crop only the newly scrolled-in content at the bottom.
-                    pw, ph = processed_img.size
-                    new_strip = processed_img.crop((0, ph - shift_px, pw, ph))
-                    text = pytesseract.image_to_string(new_strip, config="--psm 6")
+                # Coverage detection via visible item count.
+                # The loot log's visible item count only increases (0 → TRACKING_WINDOW_SIZE)
+                # during normal operation.  A sudden drop means something is covering the
+                # region; a recovery back to the previous count means it was uncovered.
+                current_count = len(parse_loot(full_text)) if full_text.strip() else 0
 
-                    drops = parse_loot(text)
-                    if drops:
-                        self._current_batch_overrides = resolve_batch_zone_overrides(
-                            [d[0] for d in drops]
-                        )
-                        for item_name, qty in drops:
-                            self._on_event(LootEvent(
-                                item_name=item_name,
-                                quantity=qty,
-                                zone=self._zone,
-                                raw_text=text[:500],
-                                character=CHARACTER_NAME,
-                            ))
+                if current_count < self._visible_count - _COVERAGE_DROP_THRESHOLD:
+                    # Count dropped more than noise allows → region is covered.
+                    if not self._covered:
+                        self._covered = True
+                        self._pre_coverage_frame = prev_processed
+                    prev_processed = processed_img
+                    continue
+
+                if self._covered:
+                    if current_count >= self._visible_count:
+                        # Count recovered → region uncovered.
+                        self._covered = False
+                        self._visible_count = max(self._visible_count, current_count)
+                        # Fire events for any items that scrolled in while covered by
+                        # comparing the last clean pre-coverage frame with the current one.
+                        if self._pre_coverage_frame is not None:
+                            recovery_shift = self._detect_scroll_shift(
+                                self._pre_coverage_frame, processed_img
+                            )
+                            if recovery_shift >= 20 and time.monotonic() >= self._suppress_events_until:
+                                self._fire_events_from_strip(processed_img, recovery_shift)
+                        self._pre_coverage_frame = None
+                    prev_processed = processed_img
+                    continue
+
+                # Normal operation: update the max visible count and process any scroll.
+                self._visible_count = max(self._visible_count, current_count)
+
+                if shift_px >= 20 and time.monotonic() >= self._suppress_events_until:
+                    self._fire_events_from_strip(processed_img, shift_px)
 
                 prev_processed = processed_img
 
