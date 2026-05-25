@@ -1,4 +1,4 @@
-## v0.3.0-prerelease - 
+## v0.3.0-prerelease - May 25th, 2026
 - Covering the detection area no longer duplicates items
 - In-depth session viewing
 - Sessions can now be deleted
