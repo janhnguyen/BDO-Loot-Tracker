@@ -48,6 +48,7 @@ class LocalStore:
             conn.execute(
                 "create index if not exists idx_loot_events_local_session on loot_events_local(session_id)"
             )
+            self._ensure_timeline_table(conn)
 
     def _ensure_loot_events_table(self, conn: sqlite3.Connection):
         expected_columns = {
@@ -82,6 +83,23 @@ class LocalStore:
         if columns == expected_columns:
             return
         self._migrate_loot_events_table(conn, columns)
+
+    def _ensure_timeline_table(self, conn: sqlite3.Connection):
+        conn.execute(
+            """
+            create table if not exists loot_events_timeline (
+                id integer primary key autoincrement,
+                session_id integer not null references sessions(id) on delete cascade,
+                item_name text not null,
+                quantity integer not null,
+                value real not null default 0,
+                elapsed_seconds real not null default 0
+            )
+            """
+        )
+        conn.execute(
+            "create index if not exists idx_timeline_session on loot_events_timeline(session_id)"
+        )
 
     def _migrate_loot_events_table(self, conn: sqlite3.Connection, columns: set[str]):
         conn.execute(
@@ -171,6 +189,7 @@ class LocalStore:
 
     def add_event(self, session_id: int, event: LootEvent):
         total_value = get_item_value_for_zone(event.item_name, event.zone) * event.quantity
+        now = datetime.now(timezone.utc)
         with self._connect() as conn:
             conn.execute(
                 """
@@ -191,6 +210,20 @@ class LocalStore:
                     event.quantity,
                     total_value,
                 ),
+            )
+            row = conn.execute(
+                "select started_at from sessions where id = ?", (session_id,)
+            ).fetchone()
+            elapsed = 0.0
+            if row:
+                elapsed = max(0.0, (now - self._parse_datetime(row["started_at"])).total_seconds())
+            conn.execute(
+                """
+                insert into loot_events_timeline
+                    (session_id, item_name, quantity, value, elapsed_seconds)
+                values (?, ?, ?, ?, ?)
+                """,
+                (session_id, event.item_name, event.quantity, total_value, elapsed),
             )
 
     def list_sessions(self, limit: int = 50) -> list[SessionSummary]:
@@ -259,6 +292,67 @@ class LocalStore:
     def upload_session_events(self, session_id: int) -> int:
         rows = self.get_unuploaded_events(session_id)
         return len(rows)
+
+    def get_session_detail(self, session_id: int) -> dict:
+        with self._connect() as conn:
+            session_row = conn.execute(
+                "select * from sessions where id = ?", (session_id,)
+            ).fetchone()
+            if not session_row:
+                return {"session": None, "timeline": [], "items": []}
+
+            timeline_rows = conn.execute(
+                """
+                select item_name, quantity, value, elapsed_seconds
+                from loot_events_timeline
+                where session_id = ?
+                order by elapsed_seconds asc, id asc
+                """,
+                (session_id,),
+            ).fetchall()
+
+            item_rows = conn.execute(
+                """
+                select item_name, quantity, value
+                from loot_events_local
+                where session_id = ?
+                order by quantity desc
+                """,
+                (session_id,),
+            ).fetchall()
+
+        return {
+            "session": {
+                "id": int(session_row["id"]),
+                "zone": session_row["zone"],
+                "started_at": session_row["started_at"],
+                "ended_at": session_row["ended_at"],
+                "duration": session_row["duration"],
+                "avg_hour": float(session_row["avg_hour"] or 0.0),
+            },
+            "timeline": [
+                {
+                    "item_name": r["item_name"],
+                    "quantity": int(r["quantity"]),
+                    "value": float(r["value"]),
+                    "elapsed_seconds": float(r["elapsed_seconds"]),
+                }
+                for r in timeline_rows
+            ],
+            "items": [
+                {
+                    "item_name": r["item_name"],
+                    "quantity": int(r["quantity"]),
+                    "value": float(r["value"]),
+                }
+                for r in item_rows
+            ],
+        }
+
+    def delete_session(self, session_id: int):
+        with self._connect() as conn:
+            conn.execute("pragma foreign_keys = on")
+            conn.execute("delete from sessions where id = ?", (session_id,))
 
     def get_db_stats(self) -> dict:
         with self._connect() as conn:

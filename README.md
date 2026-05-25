@@ -1,6 +1,6 @@
 # BDO Loot Tracker
 
-A real-time loot tracking overlay for **Black Desert Online**. It watches your loot pickups via OCR, parses item names and quantities against a known CSV item list.
+An open source, real-time loot tracking overlay for **Black Desert Online**. It watches your loot pickups via OCR, parses item names and quantities against a known CSV item list.
 
 ---
 
@@ -41,4 +41,4 @@ A debug image is saved to `helpers/calibration_debug.png` for verification.
 
 ## Desktop UI (Svelte)
 
-The tracker UI runs as a standalone desktop window (powered by `pywebview`) while still being served locally from `http://127.0.0.1:8765` in the background.
+The tracker UI runs as a standalone desktop window (powered by `PySide6`) while still being served locally from `http://127.0.0.1:8765` in the background.

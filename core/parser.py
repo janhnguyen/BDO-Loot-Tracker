@@ -161,7 +161,7 @@ def parse_loot(text: str):
         if '[' not in line or ']' not in line:
             continue
         line_stripped = re.sub(r'\bevent\b', '', line.replace("[", "").replace("]", ""), flags=re.IGNORECASE).strip()
-        line_stripped = line_stripped.replace('\u2019', "'").replace('\u2018', "'").replace('`', "'")
+        line_stripped = line_stripped.replace('\u2019', "'").replace('\u2018', "'").replace('`', "'").replace('THAN','HAN')
         line_lc = line_stripped.lower()
         for name in ITEM_NAMES:
             idx = line_lc.find(name.lower())

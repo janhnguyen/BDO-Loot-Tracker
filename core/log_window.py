@@ -42,6 +42,8 @@ class LogWindow:
         get_font_size_cb=None,
         set_font_size_cb=None,
         get_db_stats_cb=None,
+        get_session_detail_cb=None,
+        delete_session_cb=None,
         show_ocr_pane_default: bool = False,
         ocr_pane_settings_changed_cb=None,
         pause_cb=None,
@@ -60,6 +62,8 @@ class LogWindow:
         self.get_font_size_cb = get_font_size_cb
         self.set_font_size_cb = set_font_size_cb
         self.get_db_stats_cb = get_db_stats_cb
+        self.get_session_detail_cb = get_session_detail_cb
+        self.delete_session_cb = delete_session_cb
         self.ocr_pane_settings_changed_cb = ocr_pane_settings_changed_cb
         self.pause_cb = pause_cb
         self.resume_cb = resume_cb
@@ -273,6 +277,10 @@ class LogWindow:
             self.set_font_size_cb(body.get("value", 12))
         elif action == "clear_totals":
             self._clear_totals()
+        elif action == "delete_session" and self.delete_session_cb:
+            session_id = body.get("session_id")
+            if session_id is not None:
+                self.delete_session_cb(int(session_id))
 
     def _make_handler(self):
         log_window = self
@@ -315,6 +323,21 @@ class LogWindow:
                 if self.path == "/api/db_stats":
                     stats = log_window.get_db_stats_cb() if log_window.get_db_stats_cb else {}
                     self._write_json(stats)
+                    return
+
+                if self.path.startswith("/api/session_detail"):
+                    from urllib.parse import urlparse, parse_qs
+                    params = parse_qs(urlparse(self.path).query)
+                    try:
+                        session_id = int(params.get("id", ["0"])[0])
+                    except (ValueError, IndexError):
+                        session_id = 0
+                    detail = (
+                        log_window.get_session_detail_cb(session_id)
+                        if log_window.get_session_detail_cb
+                        else {}
+                    )
+                    self._write_json(detail)
                     return
 
                 target = self.path.split("?", 1)[0]

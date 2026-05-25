@@ -177,6 +177,12 @@ def main():
     def get_db_stats():
         return local_store.get_db_stats()
 
+    def get_session_detail(session_id: int):
+        return local_store.get_session_detail(session_id)
+
+    def delete_session(session_id: int):
+        local_store.delete_session(session_id)
+
     # Create the log window with start/stop callbacks
     log_window = LogWindow(
         start_cb=start_session,
@@ -194,6 +200,8 @@ def main():
         get_font_size_cb=get_font_size,
         set_font_size_cb=set_font_size,
         get_db_stats_cb=get_db_stats,
+        get_session_detail_cb=get_session_detail,
+        delete_session_cb=delete_session,
         pause_cb=pause_session,
         resume_cb=resume_session,
         is_paused_cb=tracker.is_paused,
