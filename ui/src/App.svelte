@@ -180,6 +180,77 @@
 
   function stopDrag() { draggingH = false; draggingV = false; }
 
+  // ── Keybindings ────────────────────────────────────────────────────────────
+  let rebinding = null;       // action name being rebound ('start'|'pause'|'stop')
+  let rebindPrevious = null;  // value to restore on cancel
+
+  const REBIND_LABELS = { start: 'Start', pause: 'Pause / Resume', stop: 'Stop' };
+
+  function sanitizeCharacterName(raw) {
+    return raw.replace(/<[^>]*>/g, '').replace(/[\r\n\t]/g, '').trim();
+  }
+
+  function fmtKeybind(b) {
+    if (!b) return '—';
+    return b.replace('Control', 'Ctrl');
+  }
+
+  function parseKeybind(b) {
+    if (!b) return null;
+    const parts = b.split('+');
+    return {
+      ctrl:  parts.includes('Control'),
+      shift: parts.includes('Shift'),
+      alt:   parts.includes('Alt'),
+      key:   parts[parts.length - 1].toUpperCase(),
+    };
+  }
+
+  function startRebind(action) {
+    rebindPrevious = state[`keybind_${action}`] ?? null;
+    rebinding = action;
+  }
+
+  function cancelRebind() {
+    rebinding = null;
+    rebindPrevious = null;
+  }
+
+  function onGlobalKeydown(e) {
+    if (rebinding) {
+      e.preventDefault();
+      if (e.key === 'Escape') {
+        cancelRebind();
+        return;
+      }
+      const mods = ['Control', 'Shift', 'Alt', 'Meta'];
+      if (!mods.includes(e.key)) {
+        const parts = [];
+        if (e.ctrlKey)  parts.push('Control');
+        if (e.shiftKey) parts.push('Shift');
+        if (e.altKey)   parts.push('Alt');
+        parts.push(e.key.length === 1 ? e.key.toUpperCase() : e.key);
+        api('set_keybind', 'POST', { action: rebinding, key: parts.join('+') });
+        rebinding = null;
+        rebindPrevious = null;
+      }
+      return;
+    }
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    const match = (binding, defaultB) => {
+      const b = parseKeybind(binding ?? defaultB);
+      return b && e.ctrlKey === b.ctrl && e.shiftKey === b.shift &&
+             e.altKey === b.alt && e.key.toUpperCase() === b.key;
+    };
+    if (match(state.keybind_start, 'Control+Shift+A')) { e.preventDefault(); api('start'); }
+    else if (match(state.keybind_pause, 'Control+Shift+S')) {
+      e.preventDefault();
+      api(state.paused ? 'resume' : 'pause');
+    }
+    else if (match(state.keybind_stop, 'Control+Shift+D')) { e.preventDefault(); api('stop'); }
+  }
+
   function fmtSilver(v) {
     if (v == null || isNaN(v)) return '0';
     if (v >= 1e9) return (v / 1e9).toFixed(2) + 'B';
@@ -286,6 +357,8 @@
     return () => clearInterval(interval);
   });
 </script>
+
+<svelte:window on:keydown={onGlobalKeydown} />
 
 <div class="ui-root">
 
@@ -432,6 +505,18 @@
       {:else}
         <div class="detail-loading">Session not found.</div>
       {/if}
+    </div>
+  {/if}
+
+  <!-- Keybind capture popup -->
+  {#if rebinding}
+    <div class="rebind-overlay" role="dialog" aria-modal="true">
+      <div class="rebind-modal">
+        <div class="rebind-title">Rebind — {REBIND_LABELS[rebinding]}</div>
+        <div class="rebind-current">Current: <span class="rebind-current-key">{fmtKeybind(rebindPrevious)}</span></div>
+        <div class="rebind-prompt">Press a key combination…</div>
+        <button class="modal-btn-cancel" on:click={cancelRebind}>Cancel</button>
+      </div>
     </div>
   {/if}
 
@@ -586,6 +671,32 @@
       {:else if sidebarPanel === 'settings'}
 
         <div class="settings-group">
+          <h3>Personalization</h3>
+          <label class="settings-label" for="character-name-input">Character Name</label>
+          <input
+            id="character-name-input"
+            class="settings-text-input"
+            type="text"
+            placeholder="Enter character name"
+            value={state.character_name ?? ''}
+            on:keydown={(e) => {
+              if (e.key === 'Enter') {
+                const v = sanitizeCharacterName(e.currentTarget.value);
+                if (v) api('set_character_name', 'POST', { value: v });
+                e.currentTarget.blur();
+              } else if (e.key === 'Escape') {
+                e.currentTarget.value = state.character_name ?? '';
+                e.currentTarget.blur();
+              }
+            }}
+            on:change={(e) => {
+              const v = sanitizeCharacterName(e.currentTarget.value);
+              if (v) api('set_character_name', 'POST', { value: v });
+            }}
+          />
+        </div>
+
+        <div class="settings-group">
           <h3>Calibration</h3>
           <button class="settings-btn" on:click={() => api('calibrate')}>Calibrate</button>
         </div>
@@ -643,6 +754,14 @@
           <label class="toggle-row">
             <input
               type="checkbox"
+              checked={state.show_live_log ?? false}
+              on:change={(e) => api('toggle_live_log', 'POST', { value: e.currentTarget.checked })}
+            />
+            <span>Show Live Log</span>
+          </label>
+          <label class="toggle-row">
+            <input
+              type="checkbox"
               checked={state.show_ocr}
               on:change={(e) => api('toggle_ocr', 'POST', { value: e.currentTarget.checked })}
             />
@@ -656,6 +775,36 @@
             />
             <span>Show Live OCR image</span>
           </label>
+        </div>
+
+        <div class="settings-group">
+          <h3>Keybindings</h3>
+          {#each [['start', 'Start'], ['pause', 'Pause / Resume'], ['stop', 'Stop']] as [action, label]}
+            <div class="keybind-row">
+              <span class="keybind-label">{label}</span>
+              <button class="keybind-btn" on:click={() => startRebind(action)}
+              >{fmtKeybind(state[`keybind_${action}`])}</button>
+            </div>
+          {/each}
+        </div>
+
+        <div class="settings-group">
+          <h3>About</h3>
+          <div class="about-version">v{state.current_version ?? '—'}</div>
+          {#if state.update_available}
+            <p class="settings-hint update-available">v{state.latest_version} is available.</p>
+            <button class="settings-btn update-btn" on:click={() => api('open_release_page')}>
+              Download Update
+            </button>
+          {:else if state.latest_version && !state.update_checking}
+            <p class="settings-hint">You're up to date.</p>
+          {/if}
+          <button
+            class="settings-btn"
+            disabled={state.update_checking}
+            on:click={() => api('check_for_updates')}
+          >{state.update_checking ? 'Checking for Updates…' : 'Check for Updates'}</button>
+          <button class="settings-btn" on:click={() => api('open_source_code')}>Source Code</button>
         </div>
 
       {/if}
@@ -694,17 +843,19 @@
       on:mouseleave={stopDrag}
     >
       <div class="panes-top" style="flex: 1; min-height: 0; display: flex;">
-        <article style="width: {leftPct}%; min-width: 0;">
-          <h2>LIVE LOG</h2>
-          <pre
-            bind:this={liveLogEl}
-            on:scroll={onLiveLogScroll}
-            style="font-size: {state.items_font_size ?? 12}px"
-          >{(state.show_ocr ? state.logs : state.logs.filter(l => !l.includes('[OCR]'))).join('\n')}</pre>
-        </article>
+        {#if state.show_live_log}
+          <article style="width: {leftPct}%; min-width: 0;">
+            <h2>LIVE LOG</h2>
+            <pre
+              bind:this={liveLogEl}
+              on:scroll={onLiveLogScroll}
+              style="font-size: {state.items_font_size ?? 12}px"
+            >{(state.show_ocr ? state.logs : state.logs.filter(l => !l.includes('[OCR]'))).join('\n')}</pre>
+          </article>
 
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div class="drag-handle-h" on:mousedown={startDragH}></div>
+          <!-- svelte-ignore a11y-no-static-element-interactions -->
+          <div class="drag-handle-h" on:mousedown={startDragH}></div>
+        {/if}
 
         <article style="flex: 1; min-width: 0;">
           <h2>SESSION TOTALS <span class="session-silver">{fmtSilver(state.session_silver ?? 0)}</span></h2>

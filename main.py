@@ -13,7 +13,12 @@ from core.config import (
     LOCAL_DB_PATH,
     SHOW_OCR_LOG,
     SHOW_OCR_PANE,
+    SHOW_LIVE_LOG,
     ITEMS_FONT_SIZE,
+    KEYBIND_START,
+    KEYBIND_PAUSE,
+    KEYBIND_STOP,
+    CHARACTER_NAME,
     save_env_setting,
     ENV_PATH,
 )
@@ -242,6 +247,11 @@ def main():
         resume_cb=resume_session,
         is_paused_cb=tracker.is_paused,
         update_market_prices_cb=update_market_prices,
+        show_live_log_default=SHOW_LIVE_LOG,
+        keybind_start_default=KEYBIND_START,
+        keybind_pause_default=KEYBIND_PAUSE,
+        keybind_stop_default=KEYBIND_STOP,
+        character_name_default=CHARACTER_NAME,
     )
 
     # Run tray, passing tracker methods

@@ -14,11 +14,18 @@ loot_tracker.db
 
 dist/
 build/
-*.spec
 *.zip
 .idea
-bdoLootTracker.iml
+*.iml
 .claude
+
+# Inno Setup output
+installer_output/
+*.iss
+
+# Generated at build time from ui/favicon.png
+favicon.ico
 
 # Svelte
 ui/node_modules/
+ui/dist/
