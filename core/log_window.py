@@ -12,6 +12,7 @@ from typing import Any
 
 from .parser import get_item_value_for_zone
 from .config import save_env_setting
+from . import updater as _updater
 
 # When frozen by PyInstaller, bundled resources live in sys._MEIPASS.
 # In development they live relative to this source file.
@@ -22,6 +23,7 @@ _RESOURCE_ROOT = (
 _CHANGELOG_PATH = _RESOURCE_ROOT / "CHANGELOG.md"
 
 from PySide6.QtCore import QTimer, QUrl
+from PySide6.QtGui import QIcon
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import QApplication, QMainWindow
 
@@ -57,6 +59,7 @@ class LogWindow:
         keybind_start_default: str = "Control+Shift+A",
         keybind_pause_default: str = "Control+Shift+S",
         keybind_stop_default: str = "Control+Shift+D",
+        character_name_default: str = "MyCharacter",
     ):
         self.get_status_cb = get_status_cb
         self.start_cb = start_cb
@@ -83,6 +86,13 @@ class LogWindow:
         self._keybind_start = keybind_start_default
         self._keybind_pause = keybind_pause_default
         self._keybind_stop = keybind_stop_default
+        self._character_name = character_name_default
+
+        self._current_version = _updater.read_current_version(_RESOURCE_ROOT)
+        self._latest_version = ""
+        self._update_available = False
+        self._update_url = ""
+        self._update_checking = False
 
         self.show_ocr = show_ocr_default
         self.show_ocr_pane = show_ocr_pane_default
@@ -144,6 +154,14 @@ class LogWindow:
         with self._lock:
             self._logs.append(f"[{ts}] [SYSTEM] {text}")
             self._logs = self._logs[-400:]
+
+    def _run_update_check(self):
+        result = _updater.check(_RESOURCE_ROOT)
+        with self._lock:
+            self._latest_version = result["latest"]
+            self._update_available = result["available"]
+            self._update_url = result["url"]
+            self._update_checking = False
 
     def _clear_totals(self):
         with self._lock:
@@ -268,6 +286,12 @@ class LogWindow:
                 "keybind_start": self._keybind_start,
                 "keybind_pause": self._keybind_pause,
                 "keybind_stop": self._keybind_stop,
+                "character_name": self._character_name,
+                "current_version": self._current_version,
+                "latest_version": self._latest_version,
+                "update_available": self._update_available,
+                "update_url": self._update_url,
+                "update_checking": self._update_checking,
             }
 
     def _handle_action(self, action: str, body: dict[str, Any]):
@@ -305,6 +329,11 @@ class LogWindow:
         elif action == "toggle_live_log":
             self.show_live_log = bool(body.get("value", False))
             save_env_setting("SHOW_LIVE_LOG", self.show_live_log)
+        elif action == "set_character_name":
+            name = "".join(c for c in str(body.get("value", "")) if c not in "\r\n\t").strip()
+            if name:
+                self._character_name = name
+                save_env_setting("CHARACTER_NAME", name)
         elif action == "set_keybind":
             act = body.get("action", "")
             key = str(body.get("key", "")).strip()
@@ -317,6 +346,17 @@ class LogWindow:
             elif act == "stop" and key:
                 self._keybind_stop = key
                 save_env_setting("KEYBIND_STOP", key)
+        elif action == "check_for_updates":
+            if not self._update_checking:
+                self._update_checking = True
+                threading.Thread(target=self._run_update_check, daemon=True).start()
+        elif action == "open_release_page":
+            if self._update_url:
+                import webbrowser
+                webbrowser.open(self._update_url)
+        elif action == "open_source_code":
+            import webbrowser
+            webbrowser.open("https://github.com/janhnguyen/BDO-Loot-Tracker")
         elif action == "update_market_prices" and self.update_market_prices_cb:
             if not self._market_updating:
                 self._market_updating = True
@@ -450,11 +490,27 @@ class LogWindow:
         self._server = ThreadingHTTPServer((self._host, self._port), self._make_handler())
         self._server_thread = threading.Thread(target=self._server.serve_forever, daemon=True)
         self._server_thread.start()
+        self._update_checking = True
+        threading.Thread(target=self._run_update_check, daemon=True).start()
         try:
             import os
+            import ctypes
             os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--log-level=3")
+            # Register a unique App User Model ID so Windows uses our icon
+            # in the taskbar instead of grouping under the Python launcher.
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+                "janhnguyen.BDOLootTracker"
+            )
             app = QApplication.instance() or QApplication(sys.argv)
+            _icon_path = (
+                _RESOURCE_ROOT / "favicon.ico"
+                if (_RESOURCE_ROOT / "favicon.ico").exists()
+                else _RESOURCE_ROOT / "ui" / "favicon.png"
+            )
+            _icon = QIcon(str(_icon_path)) if _icon_path.exists() else QIcon()
+            app.setWindowIcon(_icon)
             self._window = QMainWindow()
+            self._window.setWindowIcon(_icon)
             self._window.setWindowTitle("BDO Loot Tracker")
             self._window.resize(520, 760)
             self._window.setMinimumSize(520, 400)

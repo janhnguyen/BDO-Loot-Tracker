@@ -18,6 +18,7 @@ from core.config import (
     KEYBIND_START,
     KEYBIND_PAUSE,
     KEYBIND_STOP,
+    CHARACTER_NAME,
     save_env_setting,
     ENV_PATH,
 )
@@ -250,6 +251,7 @@ def main():
         keybind_start_default=KEYBIND_START,
         keybind_pause_default=KEYBIND_PAUSE,
         keybind_stop_default=KEYBIND_STOP,
+        character_name_default=CHARACTER_NAME,
     )
 
     # Run tray, passing tracker methods

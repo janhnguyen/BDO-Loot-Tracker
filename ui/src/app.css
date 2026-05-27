@@ -303,6 +303,29 @@ pre::-webkit-scrollbar-corner {
   border-bottom: none;
 }
 
+.settings-label {
+  display: block;
+  font-size: 12px;
+  color: #9a9080;
+  margin-bottom: 5px;
+}
+
+.settings-text-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  font-size: 13px;
+  background: #1a1a1a;
+  border: 1px solid #3a3530;
+  color: #d0c9b8;
+  border-radius: 3px;
+  outline: none;
+}
+
+.settings-text-input:focus {
+  border-color: #7a7464;
+}
+
 .settings-btn {
   margin-top: 10px;
   width: 100%;
@@ -319,6 +342,21 @@ pre::-webkit-scrollbar-corner {
   font-size: 11px;
   color: #8a8070;
   line-height: 1.4;
+}
+
+.settings-hint.update-available {
+  color: #d4a017;
+}
+
+.about-version {
+  font-size: 13px;
+  color: #7a7464;
+  margin-bottom: 8px;
+}
+
+.update-btn {
+  border-color: #d4a017;
+  color: #d4a017;
 }
 
 .keybind-row {

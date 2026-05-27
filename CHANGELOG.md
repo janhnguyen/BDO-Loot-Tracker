@@ -1,7 +1,9 @@
-## v0.0.0-prerelease - 
+## v0.4.0-prerelease - May 27th, 2026
 - Recolor UI
+- Added ability to change name
 - Live Log is hidden by default
 - Added keybindings for Start/Stop/Pause
+- Check for updates in settings menu
 
 ## v0.3.0-prerelease - May 25th, 2026
 - Covering the detection area no longer duplicates items

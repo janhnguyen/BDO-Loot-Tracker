@@ -186,6 +186,10 @@
 
   const REBIND_LABELS = { start: 'Start', pause: 'Pause / Resume', stop: 'Stop' };
 
+  function sanitizeCharacterName(raw) {
+    return raw.replace(/<[^>]*>/g, '').replace(/[\r\n\t]/g, '').trim();
+  }
+
   function fmtKeybind(b) {
     if (!b) return '—';
     return b.replace('Control', 'Ctrl');
@@ -667,6 +671,32 @@
       {:else if sidebarPanel === 'settings'}
 
         <div class="settings-group">
+          <h3>Personalization</h3>
+          <label class="settings-label" for="character-name-input">Character Name</label>
+          <input
+            id="character-name-input"
+            class="settings-text-input"
+            type="text"
+            placeholder="Enter character name"
+            value={state.character_name ?? ''}
+            on:keydown={(e) => {
+              if (e.key === 'Enter') {
+                const v = sanitizeCharacterName(e.currentTarget.value);
+                if (v) api('set_character_name', 'POST', { value: v });
+                e.currentTarget.blur();
+              } else if (e.key === 'Escape') {
+                e.currentTarget.value = state.character_name ?? '';
+                e.currentTarget.blur();
+              }
+            }}
+            on:change={(e) => {
+              const v = sanitizeCharacterName(e.currentTarget.value);
+              if (v) api('set_character_name', 'POST', { value: v });
+            }}
+          />
+        </div>
+
+        <div class="settings-group">
           <h3>Calibration</h3>
           <button class="settings-btn" on:click={() => api('calibrate')}>Calibrate</button>
         </div>
@@ -756,6 +786,25 @@
               >{fmtKeybind(state[`keybind_${action}`])}</button>
             </div>
           {/each}
+        </div>
+
+        <div class="settings-group">
+          <h3>About</h3>
+          <div class="about-version">v{state.current_version ?? '—'}</div>
+          {#if state.update_available}
+            <p class="settings-hint update-available">v{state.latest_version} is available.</p>
+            <button class="settings-btn update-btn" on:click={() => api('open_release_page')}>
+              Download Update
+            </button>
+          {:else if state.latest_version && !state.update_checking}
+            <p class="settings-hint">You're up to date.</p>
+          {/if}
+          <button
+            class="settings-btn"
+            disabled={state.update_checking}
+            on:click={() => api('check_for_updates')}
+          >{state.update_checking ? 'Checking for Updates…' : 'Check for Updates'}</button>
+          <button class="settings-btn" on:click={() => api('open_source_code')}>Source Code</button>
         </div>
 
       {/if}
