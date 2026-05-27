@@ -14,6 +14,7 @@ class UpdateResult(TypedDict):
     latest: str
     available: bool
     url: str
+    installer_url: str
 
 
 def _parse(version: str) -> tuple[int, ...]:
@@ -42,6 +43,22 @@ def check(resource_root: Path) -> UpdateResult:
         url: str = data.get("html_url", "")
         latest = tag.lstrip("v")
         available = _parse(latest) > _parse(current)
-        return UpdateResult(current=current, latest=latest, available=available, url=url)
+
+        installer_url = ""
+        for asset in data.get("assets", []):
+            name: str = asset.get("name", "")
+            if name.endswith(".exe"):
+                installer_url = asset.get("browser_download_url", "")
+                break
+
+        return UpdateResult(
+            current=current,
+            latest=latest,
+            available=available,
+            url=url,
+            installer_url=installer_url,
+        )
     except Exception:
-        return UpdateResult(current=current, latest="", available=False, url="")
+        return UpdateResult(
+            current=current, latest="", available=False, url="", installer_url=""
+        )

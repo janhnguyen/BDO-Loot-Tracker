@@ -793,17 +793,25 @@
           <div class="about-version">v{state.current_version ?? '—'}</div>
           {#if state.update_available}
             <p class="settings-hint update-available">v{state.latest_version} is available.</p>
-            <button class="settings-btn update-btn" on:click={() => api('open_release_page')}>
-              Download Update
-            </button>
+            {#if state.update_downloading}
+              <button class="settings-btn update-btn" disabled>
+                Downloading… {state.update_download_progress}%
+              </button>
+            {:else}
+              <button class="settings-btn update-btn" on:click={() => api('install_update')}>
+                Install Update
+              </button>
+            {/if}
           {:else if state.latest_version && !state.update_checking}
             <p class="settings-hint">You're up to date.</p>
           {/if}
-          <button
-            class="settings-btn"
-            disabled={state.update_checking}
-            on:click={() => api('check_for_updates')}
-          >{state.update_checking ? 'Checking for Updates…' : 'Check for Updates'}</button>
+          {#if !state.update_available}
+            <button
+              class="settings-btn"
+              disabled={state.update_checking}
+              on:click={() => api('check_for_updates')}
+            >{state.update_checking ? 'Checking for Updates…' : 'Check for Updates'}</button>
+          {/if}
           <button class="settings-btn" on:click={() => api('open_source_code')}>Source Code</button>
         </div>
 

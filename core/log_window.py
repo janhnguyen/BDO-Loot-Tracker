@@ -4,6 +4,7 @@ import json
 import sys
 import threading
 import time
+import requests
 from datetime import datetime, timezone
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -92,7 +93,10 @@ class LogWindow:
         self._latest_version = ""
         self._update_available = False
         self._update_url = ""
+        self._update_installer_url = ""
         self._update_checking = False
+        self._update_downloading = False
+        self._update_download_progress = 0
 
         self.show_ocr = show_ocr_default
         self.show_ocr_pane = show_ocr_pane_default
@@ -161,7 +165,38 @@ class LogWindow:
             self._latest_version = result["latest"]
             self._update_available = result["available"]
             self._update_url = result["url"]
+            self._update_installer_url = result["installer_url"]
             self._update_checking = False
+
+    def _download_and_install(self, installer_url: str):
+        import tempfile
+        import subprocess
+        try:
+            with self._lock:
+                self._update_download_progress = 0
+            resp = requests.get(installer_url, stream=True, timeout=120)
+            resp.raise_for_status()
+            total = int(resp.headers.get("content-length", 0))
+            downloaded = 0
+            with tempfile.NamedTemporaryFile(
+                suffix=".exe", delete=False
+            ) as tmp:
+                tmp_path = tmp.name
+                for chunk in resp.iter_content(chunk_size=65536):
+                    tmp.write(chunk)
+                    downloaded += len(chunk)
+                    if total:
+                        with self._lock:
+                            self._update_download_progress = int(downloaded / total * 100)
+            with self._lock:
+                self._update_download_progress = 100
+            subprocess.Popen([tmp_path, "/SILENT"])
+            from PySide6.QtWidgets import QApplication
+            QApplication.quit()
+        except Exception:
+            with self._lock:
+                self._update_downloading = False
+                self._update_download_progress = 0
 
     def _clear_totals(self):
         with self._lock:
@@ -292,6 +327,8 @@ class LogWindow:
                 "update_available": self._update_available,
                 "update_url": self._update_url,
                 "update_checking": self._update_checking,
+                "update_downloading": self._update_downloading,
+                "update_download_progress": self._update_download_progress,
             }
 
     def _handle_action(self, action: str, body: dict[str, Any]):
@@ -354,6 +391,15 @@ class LogWindow:
             if self._update_url:
                 import webbrowser
                 webbrowser.open(self._update_url)
+        elif action == "install_update":
+            if self._update_installer_url and not self._update_downloading:
+                self._update_downloading = True
+                self._update_download_progress = 0
+                threading.Thread(
+                    target=self._download_and_install,
+                    args=(self._update_installer_url,),
+                    daemon=True,
+                ).start()
         elif action == "open_source_code":
             import webbrowser
             webbrowser.open("https://github.com/janhnguyen/BDO-Loot-Tracker")
