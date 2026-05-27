@@ -21,7 +21,6 @@ build/
 
 # Inno Setup output
 installer_output/
-*.iss
 
 # Generated at build time from ui/favicon.png
 favicon.ico
