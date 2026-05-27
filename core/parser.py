@@ -3,9 +3,9 @@ import re
 import sys
 from pathlib import Path
 
-# When frozen by PyInstaller, bundled resources live in sys._MEIPASS.
+# When frozen, items lives next to the .exe; in development it's at the repo root.
 BASE_DIR = (
-    Path(sys._MEIPASS) if getattr(sys, "frozen", False)
+    Path(sys.executable).parent if getattr(sys, "frozen", False)
     else Path(__file__).resolve().parent.parent
 )
 _ITEMS_CSV_FILE = BASE_DIR / "items" / "items.csv"

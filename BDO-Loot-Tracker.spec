@@ -15,7 +15,6 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ('items',       'items'),
         ('ui/dist',     'ui/dist'),
         ('CHANGELOG.md', '.'),
         ('helpers/calibrate.py', 'helpers'),
@@ -27,6 +26,11 @@ a = Analysis(
         'PySide6.QtWebEngineWidgets',
         'PySide6.QtWebEngineCore',
         'PySide6.QtNetwork',
+        # calibration GUI
+        'tkinter',
+        'tkinter.font',
+        'tkinter.messagebox',
+        '_tkinter',
         # system tray
         'pystray',
         'pystray._win32',
@@ -84,8 +88,10 @@ coll = COLLECT(
     name='BDO-Loot-Tracker',
 )
 
-# Place env.example next to the exe (outside _internal)
-shutil.copy(
-    'env.example',
-    str(Path('dist') / 'BDO-Loot-Tracker' / '.env'),
-)
+# Place env.example and items/ next to the exe (outside _internal)
+_dist = Path('dist') / 'BDO-Loot-Tracker'
+shutil.copy('env.example', str(_dist / '.env'))
+_items_dest = _dist / 'items'
+if _items_dest.exists():
+    shutil.rmtree(_items_dest)
+shutil.copytree('items', str(_items_dest))

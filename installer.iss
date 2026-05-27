@@ -51,6 +51,9 @@ Source: "{#MyAppSourceDir}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignorevers
 ; All bundled dependencies
 Source: "{#MyAppSourceDir}\_internal\*"; DestDir: "{app}\_internal"; Flags: ignoreversion recursesubdirs createallsubdirs
 
+; Items folder sits next to the exe so users can inspect/edit CSVs
+Source: "{#MyAppSourceDir}\items\*"; DestDir: "{app}\items"; Flags: ignoreversion recursesubdirs createallsubdirs
+
 ; Default config — only written on first install; upgrades preserve the user's .env
 Source: "{#MyAppSourceDir}\.env"; DestDir: "{app}"; Flags: onlyifdoesntexist uninsneveruninstall
 
