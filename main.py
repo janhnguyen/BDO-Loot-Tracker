@@ -255,15 +255,18 @@ def main():
     )
 
     # Run tray, passing tracker methods
-    run_tray(
+    tray_icon = run_tray(
         start=start_session,
         stop=stop_session,
         set_zone=tracker.set_zone,
-        show_log=log_window.show
+        show_log=log_window.show,
     )
 
-    # Run the UI loop
+    # Run the UI loop — blocks until the window is closed
     log_window.run()
+
+    # Window was closed — remove the tray icon too
+    tray_icon.stop()
 
 if __name__ == "__main__":
     if "--calibrate" in sys.argv:

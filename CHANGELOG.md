@@ -1,3 +1,9 @@
+## v0.4.2-prerelease - May 27th, 2026
+- Closing the tracker now closes it from the tray as well
+
+## v0.4.1-prerelease - May 27th, 2026
+- Fix dependencies
+
 ## v0.4.0-prerelease - May 27th, 2026
 - Recolor UI
 - Added ability to change name
