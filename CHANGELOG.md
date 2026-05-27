@@ -1,4 +1,7 @@
-## v0.4.2-prerelease - May 27th, 2026
+## v0.4.3 - May 27th, 2026
+- Update in-app updater
+
+## v0.4.2 - May 27th, 2026
 - Closing the tracker now closes it from the tray as well
 
 ## v0.4.1-prerelease - May 27th, 2026
