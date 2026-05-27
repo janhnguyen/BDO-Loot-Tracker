@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from .parser import get_item_value_for_zone
+from .config import save_env_setting
 
 # When frozen by PyInstaller, bundled resources live in sys._MEIPASS.
 # In development they live relative to this source file.
@@ -52,6 +53,10 @@ class LogWindow:
         resume_cb=None,
         is_paused_cb=None,
         update_market_prices_cb=None,
+        show_live_log_default: bool = False,
+        keybind_start_default: str = "Control+Shift+A",
+        keybind_pause_default: str = "Control+Shift+S",
+        keybind_stop_default: str = "Control+Shift+D",
     ):
         self.get_status_cb = get_status_cb
         self.start_cb = start_cb
@@ -73,6 +78,11 @@ class LogWindow:
         self.is_paused_cb = is_paused_cb
         self.update_market_prices_cb = update_market_prices_cb
         self._market_updating = False
+
+        self.show_live_log = show_live_log_default
+        self._keybind_start = keybind_start_default
+        self._keybind_pause = keybind_pause_default
+        self._keybind_stop = keybind_stop_default
 
         self.show_ocr = show_ocr_default
         self.show_ocr_pane = show_ocr_pane_default
@@ -254,6 +264,10 @@ class LogWindow:
                 "sessions": sessions,
                 "selected_session": self._selected_session,
                 "market_updating": self._market_updating,
+                "show_live_log": self.show_live_log,
+                "keybind_start": self._keybind_start,
+                "keybind_pause": self._keybind_pause,
+                "keybind_stop": self._keybind_stop,
             }
 
     def _handle_action(self, action: str, body: dict[str, Any]):
@@ -288,6 +302,21 @@ class LogWindow:
             self.set_font_size_cb(body.get("value", 12))
         elif action == "clear_totals":
             self._clear_totals()
+        elif action == "toggle_live_log":
+            self.show_live_log = bool(body.get("value", False))
+            save_env_setting("SHOW_LIVE_LOG", self.show_live_log)
+        elif action == "set_keybind":
+            act = body.get("action", "")
+            key = str(body.get("key", "")).strip()
+            if act == "start" and key:
+                self._keybind_start = key
+                save_env_setting("KEYBIND_START", key)
+            elif act == "pause" and key:
+                self._keybind_pause = key
+                save_env_setting("KEYBIND_PAUSE", key)
+            elif act == "stop" and key:
+                self._keybind_stop = key
+                save_env_setting("KEYBIND_STOP", key)
         elif action == "update_market_prices" and self.update_market_prices_cb:
             if not self._market_updating:
                 self._market_updating = True
@@ -427,7 +456,7 @@ class LogWindow:
             app = QApplication.instance() or QApplication(sys.argv)
             self._window = QMainWindow()
             self._window.setWindowTitle("BDO Loot Tracker")
-            self._window.resize(1132, 760)  # CSS max-width (1100) + horizontal padding (2×16)
+            self._window.resize(520, 760)
             self._window.setMinimumSize(520, 400)
             view = QWebEngineView()
             view.load(QUrl(f"http://{self._host}:{self._port}"))

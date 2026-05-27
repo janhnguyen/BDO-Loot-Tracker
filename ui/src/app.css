@@ -1,14 +1,14 @@
 :root {
   color-scheme: dark;
   font-family: Inter, system-ui, -apple-system, sans-serif;
-  background: #0d0b14;
+  background: #2b2b2b;
   color: #f0ead6;
 }
 
 body {
   margin: 0;
   height: 100vh;
-  background: #0d0b14;
+  background: #2b2b2b;
 }
 
 .ui-root {
@@ -44,7 +44,7 @@ header {
 }
 
 button, select {
-  background: #12101c;
+  background: #2b2b2b;
   color: #f0ead6;
   border: 1px solid #7a7464;
   border-radius: 6px;
@@ -54,7 +54,7 @@ button, select {
 }
 
 button:hover {
-  background: #1e1a2e;
+  background: #282828;
   border-color: #d4a017;
   color: #f5e9c0;
 }
@@ -82,8 +82,8 @@ button.stop:hover { background: #220f0f; border-color: #f07070; color: #f07070; 
 }
 
 article {
-  background: #12101c;
-  border: 1px solid #2e2a3f;
+  background: #282828;
+  border: 1px solid #363636;
   border-radius: 8px;
   padding: 10px;
   display: flex;
@@ -161,7 +161,7 @@ pre::-webkit-scrollbar-corner {
 }
 
 .icon-btn:hover {
-  background: #2e2a3f;
+  background: #555555;
 }
 
 .menu-btn {
@@ -193,8 +193,8 @@ pre::-webkit-scrollbar-corner {
   right: 0;
   width: 340px;
   height: 100vh;
-  background: #12101c;
-  border-left: 1px solid #2e2a3f;
+  background: #1a1a1a;
+  border-left: 1px solid #555555;
   display: flex;
   flex-direction: column;
   z-index: 101;
@@ -212,7 +212,7 @@ pre::-webkit-scrollbar-corner {
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px 12px;
-  border-bottom: 1px solid #2e2a3f;
+  border-bottom: 1px solid #555555;
 }
 
 .sidebar-title {
@@ -228,7 +228,7 @@ pre::-webkit-scrollbar-corner {
   display: flex;
   gap: 4px;
   padding: 10px 12px;
-  border-bottom: 1px solid #2e2a3f;
+  border-bottom: 1px solid #555555;
 }
 
 .nav-btn {
@@ -245,14 +245,14 @@ pre::-webkit-scrollbar-corner {
 }
 
 .nav-btn:hover {
-  background: #1e1a2e;
+  background: #282828;
   color: #f0ead6;
 }
 
 .nav-btn.active {
-  background: #1e1a2e;
+  background: #282828;
   color: #d4a017;
-  border-color: #3a3050;
+  border-color: #464646;
 }
 
 /* ── Sidebar content panels ───────────────────────────────────────────────── */
@@ -296,7 +296,7 @@ pre::-webkit-scrollbar-corner {
   cursor: pointer;
   font-size: 13px;
   color: #d0c9b8;
-  border-bottom: 1px solid #1e1a2e;
+  border-bottom: 1px solid #282828;
 }
 
 .toggle-row:last-child {
@@ -319,6 +319,91 @@ pre::-webkit-scrollbar-corner {
   font-size: 11px;
   color: #8a8070;
   line-height: 1.4;
+}
+
+.keybind-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid #282828;
+}
+.keybind-row:last-of-type {
+  border-bottom: none;
+}
+.keybind-label {
+  font-size: 13px;
+  color: #d0c9b8;
+}
+.keybind-btn {
+  font-size: 12px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  background: #222222;
+  border: 1px solid #464646;
+  color: #d4a017;
+  padding: 3px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  min-width: 110px;
+  text-align: center;
+  transition: border-color 0.12s, background 0.12s;
+}
+.keybind-btn:hover {
+  border-color: #d4a017;
+  background: #282828;
+}
+.keybind-listening {
+  border-color: #50c878 !important;
+  color: #50c878 !important;
+  background: #1a2e1a !important;
+}
+
+/* ── Keybind capture popup ────────────────────────────────────────────────── */
+
+.rebind-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rebind-modal {
+  background: #1a1a1a;
+  border: 1px solid #464646;
+  border-radius: 10px;
+  padding: 28px 28px 22px;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  text-align: center;
+}
+
+.rebind-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f0ead6;
+}
+
+.rebind-current {
+  font-size: 12px;
+  color: #7a7464;
+}
+
+.rebind-current-key {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  color: #d4a017;
+}
+
+.rebind-prompt {
+  font-size: 13px;
+  color: #d0c9b8;
+  padding: 12px 0 4px;
 }
 
 .toggle-row input[type='checkbox'] {
@@ -373,7 +458,7 @@ pre::-webkit-scrollbar-corner {
   width: 6px;
   flex-shrink: 0;
   cursor: col-resize;
-  background: #1a1726;
+  background: #222222;
   transition: background 0.15s;
 }
 
@@ -386,7 +471,7 @@ pre::-webkit-scrollbar-corner {
   height: 6px;
   flex-shrink: 0;
   cursor: row-resize;
-  background: #1a1726;
+  background: #222222;
   transition: background 0.15s;
 }
 
@@ -399,8 +484,8 @@ pre::-webkit-scrollbar-corner {
 
 .ocr-pane {
   flex-shrink: 0;
-  border-color: #1e2a1e;
-  background: #0b0f0b;
+  border-color: #363636;
+  background: #282828;
 }
 
 .ocr-pane h2 {
@@ -478,8 +563,8 @@ pre::-webkit-scrollbar-corner {
 }
 
 .db-card {
-  background: #0d0b14;
-  border: 1px solid #2e2a3f;
+  background: #111111;
+  border: 1px solid #363636;
   border-radius: 8px;
   padding: 10px 12px;
   display: flex;
@@ -524,8 +609,8 @@ pre::-webkit-scrollbar-corner {
 }
 
 .db-session {
-  background: #0d0b14;
-  border: 1px solid #2e2a3f;
+  background: #111111;
+  border: 1px solid #363636;
   border-radius: 8px;
   padding: 9px 12px;
   display: flex;
@@ -534,7 +619,7 @@ pre::-webkit-scrollbar-corner {
 }
 
 .db-session:hover {
-  border-color: #3a3050;
+  border-color: #464646;
 }
 
 .db-session-head {
@@ -567,9 +652,9 @@ pre::-webkit-scrollbar-corner {
   letter-spacing: 0.05em;
   padding: 2px 6px;
   border-radius: 4px;
-  background: #1e1a2e;
+  background: #282828;
   color: #7a7464;
-  border: 1px solid #2e2a3f;
+  border: 1px solid #363636;
   flex-shrink: 0;
 }
 
@@ -627,13 +712,13 @@ pre::-webkit-scrollbar-corner {
   gap: 8px;
   padding: 6px 10px;
   border-radius: 6px;
-  background: #0d0b14;
+  background: #111111;
   border: 1px solid transparent;
   transition: border-color 0.12s;
 }
 
 .db-item-row:hover {
-  border-color: #2e2a3f;
+  border-color: #363636;
 }
 
 .db-item-rank {
@@ -668,8 +753,8 @@ pre::-webkit-scrollbar-corner {
 }
 
 .db-session-clickable:hover {
-  border-color: #5a4f80;
-  background: #100e1c;
+  border-color: #505050;
+  background: #181818;
 }
 
 /* ── Session delete button ────────────────────────────────────────────────── */
@@ -707,8 +792,8 @@ pre::-webkit-scrollbar-corner {
 }
 
 .modal {
-  background: #12101c;
-  border: 1px solid #3a3050;
+  background: #1a1a1a;
+  border: 1px solid #464646;
   border-radius: 10px;
   padding: 24px 24px 20px;
   width: 300px;
@@ -739,7 +824,7 @@ pre::-webkit-scrollbar-corner {
 
 .modal-btn-cancel {
   background: transparent;
-  border: 1px solid #3a3050;
+  border: 1px solid #464646;
   color: #a09880;
   font-size: 13px;
   padding: 7px 16px;
@@ -749,7 +834,7 @@ pre::-webkit-scrollbar-corner {
 }
 
 .modal-btn-cancel:hover {
-  background: #1e1a2e;
+  background: #282828;
   color: #f0ead6;
 }
 
@@ -775,7 +860,7 @@ pre::-webkit-scrollbar-corner {
 .detail-overlay {
   position: fixed;
   inset: 0;
-  background: #0d0b14;
+  background: #111111;
   z-index: 150;
   display: flex;
   flex-direction: column;
@@ -787,7 +872,7 @@ pre::-webkit-scrollbar-corner {
   align-items: center;
   gap: 14px;
   padding: 11px 20px;
-  border-bottom: 1px solid #2e2a3f;
+  border-bottom: 1px solid #363636;
   flex-shrink: 0;
 }
 
@@ -827,8 +912,8 @@ pre::-webkit-scrollbar-corner {
   display: flex;
   gap: 0;
   margin-bottom: 24px;
-  background: #12101c;
-  border: 1px solid #2e2a3f;
+  background: #1a1a1a;
+  border: 1px solid #363636;
   border-radius: 10px;
   overflow: hidden;
 }
@@ -836,7 +921,7 @@ pre::-webkit-scrollbar-corner {
 .detail-stat {
   flex: 1;
   padding: 12px 16px;
-  border-right: 1px solid #2e2a3f;
+  border-right: 1px solid #363636;
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -881,8 +966,8 @@ pre::-webkit-scrollbar-corner {
 /* Chart */
 
 .detail-chart-wrap {
-  background: #12101c;
-  border: 1px solid #2e2a3f;
+  background: #1a1a1a;
+  border: 1px solid #363636;
   border-radius: 10px;
   padding: 12px 8px 4px;
   margin-bottom: 4px;
@@ -901,12 +986,12 @@ pre::-webkit-scrollbar-corner {
 }
 
 .chart-grid {
-  stroke: #1e1a2e;
+  stroke: #282828;
   stroke-width: 1;
 }
 
 .chart-axis {
-  stroke: #2e2a3f;
+  stroke: #363636;
   stroke-width: 1;
 }
 
@@ -933,8 +1018,8 @@ pre::-webkit-scrollbar-corner {
 
 .chart-toggle {
   display: flex;
-  background: #0d0b14;
-  border: 1px solid #2e2a3f;
+  background: #111111;
+  border: 1px solid #363636;
   border-radius: 6px;
   overflow: hidden;
   gap: 0;
@@ -953,13 +1038,13 @@ pre::-webkit-scrollbar-corner {
 }
 
 .chart-toggle-btn:hover {
-  background: #1a1726 !important;
+  background: #222222 !important;
   border-color: transparent !important;
   color: #d0c9b8 !important;
 }
 
 .chart-toggle-active {
-  background: #1e1a2e !important;
+  background: #282828 !important;
   color: #d4a017 !important;
   border-color: transparent !important;
 }
@@ -971,7 +1056,7 @@ pre::-webkit-scrollbar-corner {
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 4px 12px;
   padding: 10px 4px 4px;
-  border-top: 1px solid #1e1a2e;
+  border-top: 1px solid #282828;
   margin-top: 6px;
 }
 
@@ -1001,8 +1086,8 @@ pre::-webkit-scrollbar-corner {
 .chart-legend-unit {
   font-size: 10px;
   color: #7a7464;
-  background: #1a1726;
-  border: 1px solid #2e2a3f;
+  background: #222222;
+  border: 1px solid #363636;
   border-radius: 3px;
   padding: 0 4px;
   flex-shrink: 0;
@@ -1037,7 +1122,7 @@ pre::-webkit-scrollbar-corner {
   align-items: center;
   gap: 10px;
   padding: 6px 0;
-  border-bottom: 1px solid #1a1726;
+  border-bottom: 1px solid #222222;
 }
 
 .detail-item-row:last-child {
@@ -1057,7 +1142,7 @@ pre::-webkit-scrollbar-corner {
 .detail-item-bar-wrap {
   flex: 1;
   height: 6px;
-  background: #1a1726;
+  background: #222222;
   border-radius: 3px;
   overflow: hidden;
   min-width: 40px;
