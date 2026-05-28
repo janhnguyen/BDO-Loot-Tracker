@@ -789,6 +789,11 @@
         </div>
 
         <div class="settings-group">
+          <h3>Files</h3>
+          <button class="settings-btn" on:click={() => api('open_log_dir')}>Error Logs</button>
+        </div>
+
+        <div class="settings-group">
           <h3>About</h3>
           <div class="about-version">v{state.current_version ?? '—'}</div>
           {#if state.update_available}

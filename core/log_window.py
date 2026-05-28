@@ -55,6 +55,7 @@ class LogWindow:
         resume_cb=None,
         is_paused_cb=None,
         update_market_prices_cb=None,
+        open_log_dir_cb=None,
         show_live_log_default: bool = False,
         keybind_start_default: str = "Control+Shift+A",
         keybind_pause_default: str = "Control+Shift+S",
@@ -79,6 +80,7 @@ class LogWindow:
         self.resume_cb = resume_cb
         self.is_paused_cb = is_paused_cb
         self.update_market_prices_cb = update_market_prices_cb
+        self.open_log_dir_cb = open_log_dir_cb
         self._market_updating = False
 
         self.show_live_log = show_live_log_default
@@ -386,6 +388,8 @@ class LogWindow:
         elif action == "open_source_code":
             import webbrowser
             webbrowser.open("https://github.com/janhnguyen/BDO-Loot-Tracker")
+        elif action == "open_log_dir" and self.open_log_dir_cb:
+            self.open_log_dir_cb()
         elif action == "update_market_prices" and self.update_market_prices_cb:
             if not self._market_updating:
                 self._market_updating = True

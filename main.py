@@ -200,6 +200,10 @@ def main():
     def delete_session(session_id: int):
         local_store.delete_session(session_id)
 
+    def open_log_dir():
+        _log_dir.mkdir(parents=True, exist_ok=True)
+        subprocess.Popen(["explorer", str(_log_dir)])
+
     _ARSHA_CSV = Path(LOCAL_DB_PATH).resolve().parent.parent / "items" / "items.arsha.csv"
 
     def _write_arsha_csv(prices: dict):
@@ -257,6 +261,7 @@ def main():
         resume_cb=resume_session,
         is_paused_cb=tracker.is_paused,
         update_market_prices_cb=update_market_prices,
+        open_log_dir_cb=open_log_dir,
         show_live_log_default=SHOW_LIVE_LOG,
         keybind_start_default=KEYBIND_START,
         keybind_pause_default=KEYBIND_PAUSE,
