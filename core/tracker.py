@@ -272,7 +272,8 @@ class Tracker:
 
                 prev_processed = processed_img
 
-            except Exception as e:
-                print("Error:", e)
+            except Exception:
+                from .app_logger import log_caught_exception
+                log_caught_exception()
 
             time.sleep(POLL_INTERVAL)

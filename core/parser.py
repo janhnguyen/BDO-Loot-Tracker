@@ -66,11 +66,11 @@ def _load_csv_items(
             if tf_raw.upper() == "TRUE" and (allow_overwrite or name not in dehkia_two_tf):
                 dehkia_two_tf[name] = True
 
-            # Build zone upgrade map: [Dehkia] X → [Dehkia II] X from trash loot rows
+            # Build zone upgrade map: [Dehkia] X -> [Dehkia II] X from trash loot rows
             if zone_raw.startswith("[Dehkia]") and "[Dehkia II]" in dehkia_two_raw:
                 if allow_overwrite or zone_raw not in dehkia_zone_upgrade:
                     dehkia_zone_upgrade[zone_raw] = dehkia_two_raw
-                
+
             # Zone-specific value lookup for items that appear in multiple zones
             if zone_raw and parsed_value:
                 values_by_zone[(name, zone_raw)] = parsed_value
@@ -126,12 +126,12 @@ def resolve_batch_zone_overrides(item_names: list[str]) -> dict[str, str]:
     what else appeared in the same window.
 
     Mansha Forest / Cyclops Land:
-      Corrupt Crystal alone → Mansha Forest (already from CSV).
-      If Huge Spear is also present → override Corrupt Crystal to Cyclops Land.
+      Corrupt Crystal alone -> Mansha Forest (already from CSV).
+      If Huge Spear is also present -> override Corrupt Crystal to Cyclops Land.
 
     Armor Fragment (Shultz Guard vs Sausan Garrison):
-      Default → Shultz Guard (CSV default, value 11050).
-      If Robe Piece or Sausan Supply Package also present → Sausan Garrison (value 476).
+      Default -> Shultz Guard (CSV default, value 11050).
+      If Robe Piece or Sausan Supply Package also present -> Sausan Garrison (value 476).
     """
     overrides: dict[str, str] = {}
     name_set = set(item_names)
@@ -151,6 +151,30 @@ def _norm_digits(s: str) -> str:
              .replace('I', '1').replace(']', '1').replace('[', '1')
              .replace('O', '0').replace('o', '0'))
 
+
+def _parse_single_line(line: str) -> tuple[str, int] | None:
+    """Return (item_name, qty) if line contains a recognised item, else None."""
+    line_stripped = re.sub(r'\bevent\b', '', line.replace("[", "").replace("]", ""), flags=re.IGNORECASE).strip()
+    line_stripped = line_stripped.replace('’', "'").replace('‘', "'").replace('`', "'").replace('THAN', 'HAN')
+    line_lc = line_stripped.lower()
+    for name in ITEM_NAMES:
+        idx = line_lc.find(name.lower())
+        if idx == -1:
+            continue
+        after = line_stripped[idx + len(name):]
+        m = re.search(r'[xX×]\s*([0-9|!lI\[\]Oo]{1,6})', after)
+        if m:
+            try:
+                qty = int(_norm_digits(m.group(1)))
+                if qty > 0:
+                    return (name, qty)
+            except Exception:
+                pass
+        else:
+            return (name, 1)
+    return None
+
+
 def parse_loot(text: str):
     # Expected line format: You have obtained ● [Item Name] xN
     results = []
@@ -160,26 +184,25 @@ def parse_loot(text: str):
             continue
         if '[' not in line or ']' not in line:
             continue
-        line_stripped = re.sub(r'\bevent\b', '', line.replace("[", "").replace("]", ""), flags=re.IGNORECASE).strip()
-        line_stripped = line_stripped.replace('\u2019', "'").replace('\u2018', "'").replace('`', "'").replace('THAN','HAN')
-        line_lc = line_stripped.lower()
-        for name in ITEM_NAMES:
-            idx = line_lc.find(name.lower())
-            if idx == -1:
-                continue
-            # Search for quantity only in the text that follows the item name
-            after = line_stripped[idx + len(name):]
-            m = re.search(r'[xX×]\s*([0-9|!lI\[\]Oo]{1,6})', after)
-            if m:
-                try:
-                    qty = int(_norm_digits(m.group(1)))
-                    if qty > 0:
-                        results.append((name, qty))
-                        break
-                except Exception:
-                    pass
-            else:
-                # No quantity present treat as x1
-                results.append((name, 1))
-                break
+        parsed = _parse_single_line(line)
+        if parsed:
+            results.append(parsed)
     return results
+
+
+def parse_loot_with_raw(text: str) -> list[tuple[str, str | None]]:
+    """Return (raw_line, cleaned_line) pairs for every bracket-containing line in text.
+
+    cleaned_line is '[Item Name] xQTY' when matched, None when no item was recognised.
+    """
+    pairs: list[tuple[str, str | None]] = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if '[' not in line or ']' not in line:
+            continue
+        parsed = _parse_single_line(line)
+        cleaned = f"[{parsed[0]}] x{parsed[1]}" if parsed else None
+        pairs.append((line, cleaned))
+    return pairs
