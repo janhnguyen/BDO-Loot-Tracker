@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from .parser import get_item_value_for_zone
-from .config import save_env_setting
+from .config import save_env_setting, WINDOW_WIDTH, WINDOW_HEIGHT
 from . import updater as _updater
 
 # When frozen by PyInstaller, bundled resources live in sys._MEIPASS.
@@ -27,6 +27,25 @@ from PySide6.QtCore import QTimer, QUrl
 from PySide6.QtGui import QIcon
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import QApplication, QMainWindow
+
+
+class _TrackerWindow(QMainWindow):
+    """QMainWindow that persists its size to .env after the user stops resizing."""
+
+    def __init__(self):
+        super().__init__()
+        self._resize_timer = QTimer()
+        self._resize_timer.setSingleShot(True)
+        self._resize_timer.timeout.connect(self._save_size)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._resize_timer.start(500)
+
+    def _save_size(self):
+        size = self.size()
+        save_env_setting("WINDOW_WIDTH", size.width())
+        save_env_setting("WINDOW_HEIGHT", size.height())
 
 
 class LogWindow:
@@ -56,6 +75,7 @@ class LogWindow:
         is_paused_cb=None,
         update_market_prices_cb=None,
         open_log_dir_cb=None,
+        wipe_database_cb=None,
         show_live_log_default: bool = False,
         keybind_start_default: str = "Control+Shift+A",
         keybind_pause_default: str = "Control+Shift+S",
@@ -81,6 +101,7 @@ class LogWindow:
         self.is_paused_cb = is_paused_cb
         self.update_market_prices_cb = update_market_prices_cb
         self.open_log_dir_cb = open_log_dir_cb
+        self.wipe_database_cb = wipe_database_cb
         self._market_updating = False
 
         self.show_live_log = show_live_log_default
@@ -411,6 +432,8 @@ class LogWindow:
             webbrowser.open("https://github.com/janhnguyen/BDO-Loot-Tracker")
         elif action == "open_log_dir" and self.open_log_dir_cb:
             self.open_log_dir_cb()
+        elif action == "wipe_database" and self.wipe_database_cb:
+            self.wipe_database_cb()
         elif action == "update_market_prices" and self.update_market_prices_cb:
             if not self._market_updating:
                 self._market_updating = True
@@ -563,10 +586,10 @@ class LogWindow:
             )
             _icon = QIcon(str(_icon_path)) if _icon_path.exists() else QIcon()
             app.setWindowIcon(_icon)
-            self._window = QMainWindow()
+            self._window = _TrackerWindow()
             self._window.setWindowIcon(_icon)
             self._window.setWindowTitle("BDO Loot Tracker")
-            self._window.resize(520, 760)
+            self._window.resize(WINDOW_WIDTH, WINDOW_HEIGHT)
             self._window.setMinimumSize(520, 400)
             view = QWebEngineView()
             view.load(QUrl(f"http://{self._host}:{self._port}"))

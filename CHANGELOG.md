@@ -1,3 +1,9 @@
+## v0.4.7 - May ##th, 2026
+- Desktop UI retains size
+- UI changes
+- Clicking on the best rate session now links you to that session
+- Added the ability to clear your database
+
 ## v0.4.6 - May 28th, 2026
 - More updater bugfixes
 

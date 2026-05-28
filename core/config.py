@@ -39,6 +39,9 @@ KEYBIND_START = os.getenv("KEYBIND_START", "Control+Shift+A")
 KEYBIND_PAUSE = os.getenv("KEYBIND_PAUSE", "Control+Shift+S")
 KEYBIND_STOP  = os.getenv("KEYBIND_STOP",  "Control+Shift+D")
 
+WINDOW_WIDTH  = max(520, int(os.getenv("WINDOW_WIDTH",  "520")))
+WINDOW_HEIGHT = max(400, int(os.getenv("WINDOW_HEIGHT", "760")))
+
 def save_env_setting(key: str, value: Union[str, bool, int, float]) -> None:
     serialized_value = str(value).lower() if isinstance(value, bool) else str(value)
     lines: list[str] = []
