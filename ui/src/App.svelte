@@ -797,11 +797,17 @@
           <h3>About</h3>
           <div class="about-version">v{state.current_version ?? '—'}</div>
           {#if state.update_available}
-            <p class="settings-hint update-available">v{state.latest_version} is available.</p>
+            <div class="update-header">
+              <p class="settings-hint update-available" style="margin: 0;">v{state.latest_version} is available.</p>
+              {#if !state.update_downloading}
+                <button class="update-dismiss-btn" title="Dismiss" on:click={() => api('cancel_update')}>✕</button>
+              {/if}
+            </div>
             {#if state.update_downloading}
               <button class="settings-btn update-btn" disabled>
                 Downloading… {state.update_download_progress}%
               </button>
+              <button class="settings-btn" disabled={state.update_download_progress >= 100} on:click={() => api('cancel_update')}>Cancel</button>
             {:else}
               <button class="settings-btn update-btn" on:click={() => api('install_update')}>
                 Install Update

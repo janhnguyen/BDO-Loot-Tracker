@@ -359,6 +359,27 @@ pre::-webkit-scrollbar-corner {
   color: #d4a017;
 }
 
+.update-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.update-dismiss-btn {
+  background: none;
+  border: none;
+  color: #7a7464;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  line-height: 1;
+}
+
+.update-dismiss-btn:hover {
+  color: #ccc;
+}
+
 .keybind-row {
   display: flex;
   align-items: center;

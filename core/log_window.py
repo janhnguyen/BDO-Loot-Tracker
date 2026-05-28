@@ -97,6 +97,7 @@ class LogWindow:
         self._update_checking = False
         self._update_downloading = False
         self._update_download_progress = 0
+        self._update_cancelled = False
 
         self.show_ocr = show_ocr_default
         self.show_ocr_pane = show_ocr_pane_default
@@ -190,9 +191,21 @@ class LogWindow:
                             self._update_download_progress = int(downloaded / total * 100)
             with self._lock:
                 self._update_download_progress = 100
-            subprocess.Popen([tmp_path, "/SILENT"])
-            from PySide6.QtWidgets import QApplication
-            QApplication.quit()
+                cancelled = self._update_cancelled
+            if cancelled:
+                return
+            import os
+            import sys
+            pid = os.getpid()
+            old_exe = sys.executable if getattr(sys, "frozen", False) else ""
+            # Kill this process, run the installer, and relaunch the old exe if
+            # the user cancels the installer (InnoSetup exits non-zero on cancel).
+            relaunch = f' & if errorlevel 1 start "" "{old_exe}"' if old_exe else ""
+            subprocess.Popen(
+                f'taskkill /PID {pid} /F & start /wait "" "{tmp_path}" /SILENT /RESTARTAPPLICATIONS{relaunch}',
+                shell=True,
+                creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
+            )
         except Exception:
             with self._lock:
                 self._update_downloading = False
@@ -316,6 +329,7 @@ class LogWindow:
                 "update_checking": self._update_checking,
                 "update_downloading": self._update_downloading,
                 "update_download_progress": self._update_download_progress,
+                "update_cancelled": self._update_cancelled,
             }
 
     def _handle_action(self, action: str, body: dict[str, Any]):
@@ -380,11 +394,18 @@ class LogWindow:
             if self._update_installer_url and not self._update_downloading:
                 self._update_downloading = True
                 self._update_download_progress = 0
+                self._update_cancelled = False
                 threading.Thread(
                     target=self._download_and_install,
                     args=(self._update_installer_url,),
                     daemon=True,
                 ).start()
+        elif action == "cancel_update":
+            with self._lock:
+                self._update_cancelled = True
+                self._update_downloading = False
+                self._update_download_progress = 0
+                self._update_available = False
         elif action == "open_source_code":
             import webbrowser
             webbrowser.open("https://github.com/janhnguyen/BDO-Loot-Tracker")

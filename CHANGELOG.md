@@ -1,3 +1,9 @@
+## v0.4.6 - May 28th, 2026
+- More updater bugfixes
+
+## v0.4.5 - May 28th, 2026
+- Updater bugfix
+
 ## v0.4.4 - May 28th, 2026
 - Removed old Supabase references
 - Added error + session debug logging
