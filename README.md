@@ -1,12 +1,22 @@
 # BDO Loot Tracker
 
-An open source, real-time loot tracking overlay for **Black Desert Online**. It watches your loot pickups via OCR, parses item names and quantities against a known CSV item list.
+An open-source, real-time loot tracking overlay for **Black Desert Online**. The tracker captures loot notifications using OCR, parses item names and quantities, and stores session statistics locally in SQLite.
 
 ---
+
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![Release](https://img.shields.io/github/v/release/janhnguyen/BDO-Loot-Tracker)
 
 Download the latest version [here](https://github.com/janhnguyen/BDO-Loot-Tracker/releases).
 
 Questions, comments, or concerns? Get in contact with me through my [discord](https://discord.com/invite/uZYJfGphBP).
+
+## Features
+
+- **Live Loot Log** - timestamped items are logged and tracked
+- **Local Database** - loot events are saved to SQLite by session with start/end times, duration, and silver per hour
+- **Detailed Session Viewer** - charts showing silver earned over time and items obtained over time, plus a full items breakdown sorted by silver value
+- **Zone Detection** - Grind spots are automatically detected
 
 ### Dependencies
 
@@ -15,6 +25,26 @@ During installation, leave the default options checked (this adds Tesseract to y
 
 If you skipped that option, add it manually:  
 Control Panel → Edit the system environment variables → Advanced → Environment Variables → Edit Path (under User Variables) → New → `C:\Program Files\Tesseract-OCR`
+
+## Calibration
+
+Menu → Settings → Calibrate
+
+Set your in-game chat window transparency to 100.
+Increase the window size to show at least 20 items and ensure items fit on one line.
+
+Controls:
+
+    • Click + drag          → draw the capture region
+    • Drag edges/corners    → resize
+    • Space / Enter         → confirm and run OCR test
+    • R                     → reset selection
+    • Escape                → quit without saving
+    
+![Screenshot](images/calibration.png)
+
+> [!TIP]
+> A debug image is saved to `helpers/calibration_debug.png` for verification.
 
 ## Contributing
 
@@ -57,8 +87,8 @@ H -->|"/api/state"| I["Svelte UI"]
 ### Schema
 | Table | Purpose |
 | --- | ---|
-| `sessions` | One row per grinding session: start/end timestamps, duration (HH"MM"SS), average silver per hour, zone |
-| `loot_events_local` | Aggregated totals per item per session (quantity sums, has a unique constaint on `(session_id, item_name)`) |
+| `sessions` | One row per grinding session: start/end timestamps, duration (HH:MM:SS), average silver per hour, zone |
+| `loot_events_local` | Aggregated totals per item per session (quantity sums, has a unique constraint on `(session_id, item_name)`) |
 | `loot_events_timeline` | Full granular log: every single drop with `elapsed_seconds` from session start |
 
 ### Key Operations
@@ -66,33 +96,6 @@ H -->|"/api/state"| I["Svelte UI"]
 - `add_event()`: UPSERT - if the item already exists in the session, `quantity` is incremented; otherwise a new row is inserted. Both summary and timeline tables are written simultaneously.
 - `end_session()`: computes `avg_hour = total_silver × 3600 / duration_seconds` and writes it back to the session row.
 - `get_db_stats()`: aggregate query - all-time silver, top 10 items by quantity, best zones by average silver per hour.
-
-## Features
-
-- **Live Loot Log** - timestamped items are logged and tracked
-- **Local Database** - loot events are saved to SQLite by session with start/end times, duration, and silver per hour
-- **Detailed Session Viewer** - charts showing silver earned over time and items obtained over time, plus a full items breakdown sorted by silver value
-- **Zone Detection** - Grind spots are automatically detected
-
-## Calibration
-
-Menu → Settings → Calibrate
-
-Set your in-game chat window transparency to 100.
-Increase the window size to show atleast 20 items and ensure items fit on one line.
-
-Controls:
-
-    • Click + drag          → draw the capture region
-    • Drag edges/corners    → resize
-    • Space / Enter         → confirm and run OCR test
-    • R                     → reset selection
-    • Escape                → quit without saving
-    
-![Screenshot](images/calibration.png)
-
-> [!TIP]
-> A debug image is saved to `helpers/calibration_debug.png` for verification.
 
 ## Desktop UI
 
