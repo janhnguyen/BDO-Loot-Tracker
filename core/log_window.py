@@ -190,9 +190,14 @@ class LogWindow:
                             self._update_download_progress = int(downloaded / total * 100)
             with self._lock:
                 self._update_download_progress = 100
-            subprocess.Popen([tmp_path, "/SILENT"])
-            from PySide6.QtWidgets import QApplication
-            QApplication.quit()
+            import os
+            pid = os.getpid()
+            # A detached cmd process kills this PID, then immediately launches the installer
+            subprocess.Popen(
+                f'taskkill /PID {pid} /F && start "" "{tmp_path}" /SILENT /RESTARTAPPLICATIONS',
+                shell=True,
+                creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
+            )
         except Exception:
             with self._lock:
                 self._update_downloading = False
