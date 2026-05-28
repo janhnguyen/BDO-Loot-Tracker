@@ -1,4 +1,4 @@
-## v0.5.0 - May 29th, 2026
+## v0.5.0 - May 28th, 2026
 - Desktop UI retains size
 - UI changes
 - Adjusted naming conventions
