@@ -39,7 +39,6 @@ class LogWindow:
         start_cb=None,
         stop_cb=None,
         list_sessions_cb=None,
-        upload_session_cb=None,
         calibrate_cb=None,
         show_ocr_default: bool = False,
         ocr_settings_changed_cb=None,
@@ -56,6 +55,7 @@ class LogWindow:
         resume_cb=None,
         is_paused_cb=None,
         update_market_prices_cb=None,
+        open_log_dir_cb=None,
         show_live_log_default: bool = False,
         keybind_start_default: str = "Control+Shift+A",
         keybind_pause_default: str = "Control+Shift+S",
@@ -66,7 +66,6 @@ class LogWindow:
         self.start_cb = start_cb
         self.stop_cb = stop_cb
         self.list_sessions_cb = list_sessions_cb
-        self.upload_session_cb = upload_session_cb
         self.calibrate_cb = calibrate_cb
         self.ocr_settings_changed_cb = ocr_settings_changed_cb
         self.get_tracking_window_cb = get_tracking_window_cb
@@ -81,6 +80,7 @@ class LogWindow:
         self.resume_cb = resume_cb
         self.is_paused_cb = is_paused_cb
         self.update_market_prices_cb = update_market_prices_cb
+        self.open_log_dir_cb = open_log_dir_cb
         self._market_updating = False
 
         self.show_live_log = show_live_log_default
@@ -269,19 +269,6 @@ class LogWindow:
             if self._selected_session not in labels:
                 self._selected_session = labels[0]
 
-    def _upload_selected_session(self):
-        if not self.upload_session_cb:
-            return
-        with self._lock:
-            label = self._selected_session
-            session_id = self._session_labels.get(label)
-        if session_id is None:
-            self._append_system("No session selected.")
-            return
-        message = self.upload_session_cb(session_id)
-        self._append_system(message)
-        self.refresh_sessions()
-
     def _persist_ocr_settings(self):
         if self.ocr_settings_changed_cb:
             self.ocr_settings_changed_cb(self.show_ocr)
@@ -344,8 +331,6 @@ class LogWindow:
             message = self.calibrate_cb()
             if message:
                 self._append_system(message)
-        elif action == "upload":
-            self._upload_selected_session()
         elif action == "select_session":
             value = str(body.get("value", "No sessions"))
             with self._lock:
@@ -403,6 +388,8 @@ class LogWindow:
         elif action == "open_source_code":
             import webbrowser
             webbrowser.open("https://github.com/janhnguyen/BDO-Loot-Tracker")
+        elif action == "open_log_dir" and self.open_log_dir_cb:
+            self.open_log_dir_cb()
         elif action == "update_market_prices" and self.update_market_prices_cb:
             if not self._market_updating:
                 self._market_updating = True

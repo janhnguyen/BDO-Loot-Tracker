@@ -8,6 +8,7 @@ from core.log_window import LogWindow
 from core.tracker import Tracker
 from core.tray import run_tray
 from core.local_store import LocalStore
+from core.app_logger import SessionLogger, setup_error_logger
 from dotenv import load_dotenv
 from core.config import (
     LOCAL_DB_PATH,
@@ -22,14 +23,23 @@ from core.config import (
     save_env_setting,
     ENV_PATH,
 )
-from core.parser import get_item_zone, is_dehkia_two_indicator, get_dehkia_two_upgrade
+from core.parser import get_item_zone, is_dehkia_two_indicator, get_dehkia_two_upgrade, parse_loot_with_raw
 from core.arsha_market_source import fetch_arsha_hotlist
+from core import updater as _updater
 
 def main():
     log_window = None
     local_store = LocalStore(LOCAL_DB_PATH)
     current_session_id = None
     pending_dehkia_upgrade = False
+    _session_logger: SessionLogger | None = None
+
+    _log_dir = LOCAL_DB_PATH.parent / "logs"
+    _version = _updater.read_current_version(
+        Path(sys.executable).parent if getattr(sys, "frozen", False)
+        else Path(__file__).resolve().parent
+    )
+    setup_error_logger(_log_dir, _version)
 
     # Event callbacks
     def handle_event(event):
@@ -84,6 +94,8 @@ def main():
 
     def handle_ocr(text):
         log_window.add_raw_ocr(text)
+        if _session_logger is not None:
+            _session_logger.add_ocr_lines(parse_loot_with_raw(text))
 
     def handle_ocr_frame(raw_img, processed_img):
         log_window.add_ocr_frame(raw_img, processed_img)
@@ -92,10 +104,12 @@ def main():
     tracker = Tracker(handle_event, handle_ocr, on_ocr_frame=handle_ocr_frame)
 
     def start_session():
-        nonlocal current_session_id
+        nonlocal current_session_id, _session_logger
         if tracker.is_running():
             return
+        from datetime import datetime
         current_session_id = local_store.create_session(tracker.get_zone())
+        _session_logger = SessionLogger(_log_dir, tracker.get_zone(), datetime.now(), _version)
         tracker.start()
         log_window.start_timer()
         log_window.schedule_session_totals_reset(tracker.get_session_reset_delay())
@@ -114,26 +128,23 @@ def main():
         log_window.resume_timer()
 
     def stop_session():
-        nonlocal current_session_id
+        nonlocal current_session_id, _session_logger
         if not tracker.is_running():
             return
+        final_zone = tracker.get_zone()
         tracker.stop()
         log_window.clear_totals()
         elapsed_seconds = log_window.stop_timer()
         if current_session_id is not None:
             local_store.end_session(current_session_id, elapsed_seconds)
             current_session_id = None
+        if _session_logger is not None:
+            _session_logger.finalize(final_zone)
+            _session_logger = None
         log_window.refresh_sessions()
 
     def list_sessions():
         return local_store.list_sessions()
-
-    def upload_session(session_id: int):
-        rows = local_store.get_unuploaded_events(session_id)
-        if not rows:
-            return f"Session {session_id}: nothing to upload."
-        uploaded_count = local_store.upload_session_events(session_id)
-        return f"Session {session_id}: prepared {uploaded_count}/{len(rows)} grouped totals for upload."
 
     # Status getter for log window
     def get_status():
@@ -189,6 +200,10 @@ def main():
     def delete_session(session_id: int):
         local_store.delete_session(session_id)
 
+    def open_log_dir():
+        _log_dir.mkdir(parents=True, exist_ok=True)
+        subprocess.Popen(["explorer", str(_log_dir)])
+
     _ARSHA_CSV = Path(LOCAL_DB_PATH).resolve().parent.parent / "items" / "items.arsha.csv"
 
     def _write_arsha_csv(prices: dict):
@@ -230,7 +245,6 @@ def main():
         stop_cb=stop_session,
         get_status_cb=get_status,
         list_sessions_cb=list_sessions,
-        upload_session_cb=upload_session,
         calibrate_cb=launch_calibration,
         show_ocr_default=SHOW_OCR_LOG,
         ocr_settings_changed_cb=save_ocr_settings,
@@ -247,6 +261,7 @@ def main():
         resume_cb=resume_session,
         is_paused_cb=tracker.is_paused,
         update_market_prices_cb=update_market_prices,
+        open_log_dir_cb=open_log_dir,
         show_live_log_default=SHOW_LIVE_LOG,
         keybind_start_default=KEYBIND_START,
         keybind_pause_default=KEYBIND_PAUSE,

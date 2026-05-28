@@ -1,3 +1,7 @@
+## v0.4.4 - May 28th, 2026
+- Removed old Supabase references
+- Added error + session debug logging
+
 ## v0.4.3 - May 27th, 2026
 - Update in-app updater
 
