@@ -34,7 +34,7 @@ def _write_error_log(exc_type, exc_value, exc_tb) -> None:
         return
     _log_dir.mkdir(parents=True, exist_ok=True)
     now = datetime.now()
-    filename = f"Error_{now.strftime('%H-%M-%S')}.log"
+    filename = f"Error_{now.strftime('%Y-%m-%d_%H-%M-%S')}.log"
     lines = _header(_log_dir, _version)
     lines.append(f"Error time: {now.strftime('%Y-%m-%d %H:%M:%S')}")
     lines.append("")
@@ -43,7 +43,7 @@ def _write_error_log(exc_type, exc_value, exc_tb) -> None:
 
 
 def setup_error_logger(log_dir: Path, version: str) -> None:
-    """Call once at startup to enable Error_HH-MM-SS.log on any unhandled exception."""
+    """Call once at startup to enable Error_YYYY-MM-DD_HH-MM-SS.log on any unhandled exception."""
     global _log_dir, _version
     _log_dir = log_dir
     _version = version
@@ -59,7 +59,7 @@ def setup_error_logger(log_dir: Path, version: str) -> None:
 
 
 def log_caught_exception() -> None:
-    """Write an Error_HH-MM-SS.log for the current exception (call from an except block)."""
+    """Write an Error_YYYY-MM-DD_HH-MM-SS.log for the current exception (call from an except block)."""
     _write_error_log(*sys.exc_info())
 
 
@@ -82,7 +82,7 @@ class SessionLogger:
         self._log_dir.mkdir(parents=True, exist_ok=True)
         now = datetime.now()
         zone_safe = _safe_filename(final_zone)
-        filename = f"{zone_safe}_{self._start_time.strftime('%H-%M-%S')}.log"
+        filename = f"{zone_safe}_{self._start_time.strftime('%Y-%m-%d_%H-%M-%S')}.log"
 
         lines = _header(self._log_dir, self._version)
         lines.append(f"Session zone:  {final_zone}")

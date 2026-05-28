@@ -310,6 +310,11 @@ class LocalStore:
             conn.execute("pragma foreign_keys = on")
             conn.execute("delete from sessions where id = ?", (session_id,))
 
+    def wipe_database(self):
+        with self._connect() as conn:
+            conn.execute("pragma foreign_keys = on")
+            conn.execute("delete from sessions")
+
     def get_db_stats(self) -> dict:
         with self._connect() as conn:
             summary = conn.execute(
@@ -317,7 +322,8 @@ class LocalStore:
                 select
                     count(*) as total_sessions,
                     max(avg_hour) as best_avg_hour,
-                    (select zone from sessions order by avg_hour desc limit 1) as best_zone
+                    (select zone from sessions order by avg_hour desc limit 1) as best_zone,
+                    (select id   from sessions order by avg_hour desc limit 1) as best_session_id
                 from sessions
                 """
             ).fetchone()
@@ -370,6 +376,7 @@ class LocalStore:
                 "total_silver": float(totals["total_silver"]),
                 "best_avg_hour": float(summary["best_avg_hour"] or 0.0),
                 "best_zone": summary["best_zone"] or "—",
+                "best_session_id": int(summary["best_session_id"]) if summary["best_session_id"] is not None else None,
             },
             "sessions": [
                 {

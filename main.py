@@ -204,6 +204,10 @@ def main():
         _log_dir.mkdir(parents=True, exist_ok=True)
         subprocess.Popen(["explorer", str(_log_dir)])
 
+    def wipe_database():
+        local_store.wipe_database()
+        log_window.refresh_sessions()
+
     _ARSHA_CSV = Path(LOCAL_DB_PATH).resolve().parent.parent / "items" / "items.arsha.csv"
 
     def _write_arsha_csv(prices: dict):
@@ -262,6 +266,7 @@ def main():
         is_paused_cb=tracker.is_paused,
         update_market_prices_cb=update_market_prices,
         open_log_dir_cb=open_log_dir,
+        wipe_database_cb=wipe_database,
         show_live_log_default=SHOW_LIVE_LOG,
         keybind_start_default=KEYBIND_START,
         keybind_pause_default=KEYBIND_PAUSE,

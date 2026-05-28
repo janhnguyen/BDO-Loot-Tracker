@@ -19,6 +19,7 @@
   let dbLoading = false;
   let ocrTick = 0;
   let confirmDeleteId = null;
+  let confirmWipeDb = false;
   let sessionDetail = null;
   let sessionDetailLoading = false;
 
@@ -169,7 +170,8 @@
   function onMouseMove(e) {
     if (draggingH && panesEl) {
       const rect = panesEl.getBoundingClientRect();
-      leftPct = Math.min(80, Math.max(20, ((e.clientX - rect.left) / rect.width) * 100));
+      const clampedX = Math.max(200, Math.min(rect.width - 200, e.clientX - rect.left));
+      leftPct = (clampedX / rect.width) * 100;
     }
     if (draggingV && panesEl) {
       const rect = panesEl.getBoundingClientRect();
@@ -188,6 +190,23 @@
 
   function sanitizeCharacterName(raw) {
     return raw.replace(/<[^>]*>/g, '').replace(/[\r\n\t]/g, '').trim();
+  }
+
+  let nameFlash = null;
+  let nameFlashTimer = null;
+
+  async function saveCharacterName(v) {
+    if (v) {
+      await api('set_character_name', 'POST', { value: v });
+      const saved = state.character_name === v;
+      clearTimeout(nameFlashTimer);
+      nameFlash = saved ? 'success' : 'error';
+      nameFlashTimer = setTimeout(() => { nameFlash = null; }, 800);
+    } else {
+      clearTimeout(nameFlashTimer);
+      nameFlash = 'error';
+      nameFlashTimer = setTimeout(() => { nameFlash = null; }, 800);
+    }
   }
 
   function fmtKeybind(b) {
@@ -329,6 +348,13 @@
     await reloadDbStats();
   }
 
+  async function confirmWipe() {
+    await api('wipe_database');
+    confirmWipeDb = false;
+    dbStats = null;
+    await reloadDbStats();
+  }
+
   function handleOverlayKey(e) {
     if (e.key === 'Escape') closeSidebar();
   }
@@ -336,6 +362,7 @@
   let liveLogEl;
   let liveLogAtBottom = true;
   let modalEl;
+  let wipeModalEl;
 
   function onLiveLogScroll() {
     if (!liveLogEl) return;
@@ -349,10 +376,14 @@
     if (confirmDeleteId != null && modalEl) {
       modalEl.focus();
     }
+    if (confirmWipeDb && wipeModalEl) {
+      wipeModalEl.focus();
+    }
   });
 
-  onMount(() => {
-    refresh();
+  onMount(async () => {
+    await refresh();
+    document.getElementById('loading-overlay')?.remove();
     const interval = setInterval(refresh, 1000);
     return () => clearInterval(interval);
   });
@@ -543,6 +574,29 @@
     </div>
   {/if}
 
+  <!-- Wipe database confirmation modal -->
+  {#if confirmWipeDb}
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div class="modal-overlay" on:click={() => confirmWipeDb = false} on:keydown={(e) => e.key === 'Escape' && (confirmWipeDb = false)}>
+      <div
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        tabindex="-1"
+        bind:this={wipeModalEl}
+        on:click|stopPropagation
+        on:keydown|stopPropagation={(e) => { if (e.key === 'Enter') confirmWipe(); else if (e.key === 'Escape') confirmWipeDb = false; }}
+      >
+        <div class="modal-title">Wipe Entire Database?</div>
+        <div class="modal-body">This will permanently delete all sessions and loot data. This cannot be undone.</div>
+        <div class="modal-actions">
+          <button class="modal-btn-cancel" on:click={() => confirmWipeDb = false}>Cancel</button>
+          <button class="modal-btn-delete" on:click={confirmWipe}>Wipe</button>
+        </div>
+      </div>
+    </div>
+  {/if}
+
   <!-- Sidebar overlay -->
   {#if sidebarOpen}
     <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -607,7 +661,13 @@
               <div class="db-card-value gold">{fmtSilver(dbStats.summary.total_silver)}</div>
               <div class="db-card-label">Total Silver</div>
             </div>
-            <div class="db-card db-card-wide">
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
+            <div
+              class="db-card db-card-wide"
+              class:db-card-clickable={dbStats.summary.best_session_id != null}
+              on:click={() => dbStats.summary.best_session_id != null && openSessionDetail(dbStats.summary.best_session_id)}
+              on:keydown={(e) => e.key === 'Enter' && dbStats.summary.best_session_id != null && openSessionDetail(dbStats.summary.best_session_id)}
+            >
               <div class="db-card-value">{fmtSilver(dbStats.summary.best_avg_hour)}<span class="db-card-unit">/hr</span></div>
               <div class="db-card-label">Best Rate · {dbStats.summary.best_zone ?? '—'}</div>
             </div>
@@ -676,13 +736,15 @@
           <input
             id="character-name-input"
             class="settings-text-input"
+            class:name-flash-success={nameFlash === 'success'}
+            class:name-flash-error={nameFlash === 'error'}
             type="text"
             placeholder="Enter character name"
             value={state.character_name ?? ''}
             on:keydown={(e) => {
               if (e.key === 'Enter') {
                 const v = sanitizeCharacterName(e.currentTarget.value);
-                if (v) api('set_character_name', 'POST', { value: v });
+                saveCharacterName(v);
                 e.currentTarget.blur();
               } else if (e.key === 'Escape') {
                 e.currentTarget.value = state.character_name ?? '';
@@ -691,7 +753,7 @@
             }}
             on:change={(e) => {
               const v = sanitizeCharacterName(e.currentTarget.value);
-              if (v) api('set_character_name', 'POST', { value: v });
+              saveCharacterName(v);
             }}
           />
         </div>
@@ -791,11 +853,11 @@
         <div class="settings-group">
           <h3>Files</h3>
           <button class="settings-btn" on:click={() => api('open_log_dir')}>Error Logs</button>
+          <button class="settings-btn settings-btn-danger" on:click={() => confirmWipeDb = true}>Wipe Database</button>
         </div>
 
         <div class="settings-group">
-          <h3>About</h3>
-          <div class="about-version">v{state.current_version ?? '—'}</div>
+          <h3>Version - {state.current_version ?? '—'}</h3>
           {#if state.update_available}
             <div class="update-header">
               <p class="settings-hint update-available" style="margin: 0;">v{state.latest_version} is available.</p>
@@ -813,8 +875,6 @@
                 Install Update
               </button>
             {/if}
-          {:else if state.latest_version && !state.update_checking}
-            <p class="settings-hint">You're up to date.</p>
           {/if}
           {#if !state.update_available}
             <button
@@ -863,7 +923,7 @@
     >
       <div class="panes-top" style="flex: 1; min-height: 0; display: flex;">
         {#if state.show_live_log}
-          <article style="width: {leftPct}%; min-width: 0;">
+          <article style="width: {leftPct}%;">
             <h2>LIVE LOG</h2>
             <pre
               bind:this={liveLogEl}
@@ -876,7 +936,7 @@
           <div class="drag-handle-h" on:mousedown={startDragH}></div>
         {/if}
 
-        <article style="flex: 1; min-width: 0;">
+        <article style="flex: 1;">
           <h2>SESSION TOTALS <span class="session-silver">{fmtSilver(state.session_silver ?? 0)}</span></h2>
           <pre style="font-size: {state.items_font_size ?? 12}px">{state.totals.map((t) => `${t.name} ×${t.qty}`).join('\n')}</pre>
         </article>
