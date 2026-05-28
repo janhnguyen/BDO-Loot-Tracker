@@ -591,8 +591,30 @@ class LogWindow:
             self._window.setWindowTitle("BDO Loot Tracker")
             self._window.resize(WINDOW_WIDTH, WINDOW_HEIGHT)
             self._window.setMinimumSize(520, 400)
+            from PySide6.QtCore import QUrl
+            from PySide6.QtGui import QColor
             view = QWebEngineView()
-            view.load(QUrl(f"http://{self._host}:{self._port}"))
+            view.page().setBackgroundColor(QColor("#2b2b2b"))
+
+            _favicon = _RESOURCE_ROOT / "ui" / "dist" / "favicon.png"
+            _base_url = QUrl.fromLocalFile(str(_RESOURCE_ROOT / "ui" / "dist") + "/")
+            _favicon_src = "favicon.png" if _favicon.exists() else ""
+            _loading_html = f"""<!DOCTYPE html>
+<html><head><style>
+html,body{{margin:0;height:100vh;background:#2b2b2b;}}
+#l{{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}}
+img{{width:64px;height:64px;}}
+span{{font-family:Inter,system-ui,sans-serif;font-size:18px;font-weight:600;color:#f0ead6;letter-spacing:.04em;}}
+</style></head><body><div id="l"><img src="{_favicon_src}"/><span>BDO Loot Tracker</span></div></body></html>"""
+
+            _app_url = QUrl(f"http://{self._host}:{self._port}")
+
+            def _load_app(ok):
+                view.loadFinished.disconnect(_load_app)
+                view.load(_app_url)
+
+            view.loadFinished.connect(_load_app)
+            view.setHtml(_loading_html, _base_url)
             self._window.setCentralWidget(view)
             self._window.show()
             app.exec()

@@ -5,9 +5,38 @@
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>BDO Loot Tracker</title>
+    <style>
+      html, body { margin: 0; background: #2b2b2b; }
+      #loading-overlay {
+        position: fixed;
+        inset: 0;
+        background: #2b2b2b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        z-index: 9999;
+      }
+      #loading-overlay img {
+        width: 64px;
+        height: 64px;
+      }
+      #loading-overlay span {
+        font-family: Inter, system-ui, -apple-system, sans-serif;
+        font-size: 18px;
+        font-weight: 600;
+        color: #f0ead6;
+        letter-spacing: 0.04em;
+      }
+    </style>
     <script type="module" src="/src/main.js"></script>
   </head>
   <body>
+    <div id="loading-overlay">
+      <img src="/favicon.png" alt="" />
+      <span>BDO Loot Tracker</span>
+    </div>
     <div id="app"></div>
   </body>
 </html>

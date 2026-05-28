@@ -192,6 +192,23 @@
     return raw.replace(/<[^>]*>/g, '').replace(/[\r\n\t]/g, '').trim();
   }
 
+  let nameFlash = null;
+  let nameFlashTimer = null;
+
+  async function saveCharacterName(v) {
+    if (v) {
+      await api('set_character_name', 'POST', { value: v });
+      const saved = state.character_name === v;
+      clearTimeout(nameFlashTimer);
+      nameFlash = saved ? 'success' : 'error';
+      nameFlashTimer = setTimeout(() => { nameFlash = null; }, 800);
+    } else {
+      clearTimeout(nameFlashTimer);
+      nameFlash = 'error';
+      nameFlashTimer = setTimeout(() => { nameFlash = null; }, 800);
+    }
+  }
+
   function fmtKeybind(b) {
     if (!b) return '—';
     return b.replace('Control', 'Ctrl');
@@ -364,8 +381,9 @@
     }
   });
 
-  onMount(() => {
-    refresh();
+  onMount(async () => {
+    await refresh();
+    document.getElementById('loading-overlay')?.remove();
     const interval = setInterval(refresh, 1000);
     return () => clearInterval(interval);
   });
@@ -718,13 +736,15 @@
           <input
             id="character-name-input"
             class="settings-text-input"
+            class:name-flash-success={nameFlash === 'success'}
+            class:name-flash-error={nameFlash === 'error'}
             type="text"
             placeholder="Enter character name"
             value={state.character_name ?? ''}
             on:keydown={(e) => {
               if (e.key === 'Enter') {
                 const v = sanitizeCharacterName(e.currentTarget.value);
-                if (v) api('set_character_name', 'POST', { value: v });
+                saveCharacterName(v);
                 e.currentTarget.blur();
               } else if (e.key === 'Escape') {
                 e.currentTarget.value = state.character_name ?? '';
@@ -733,7 +753,7 @@
             }}
             on:change={(e) => {
               const v = sanitizeCharacterName(e.currentTarget.value);
-              if (v) api('set_character_name', 'POST', { value: v });
+              saveCharacterName(v);
             }}
           />
         </div>

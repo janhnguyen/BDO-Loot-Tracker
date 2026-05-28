@@ -1,4 +1,4 @@
-## v0.4.7 - May ##th, 2026
+## v0.5.0 - May 29th, 2026
 - Desktop UI retains size
 - UI changes
 - Clicking on the best rate session now links you to that session

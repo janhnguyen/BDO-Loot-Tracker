@@ -15,6 +15,7 @@ body {
   height: 100%;
 }
 
+
 main {
   max-width: 1100px;
   margin: 0 auto;
@@ -335,6 +336,26 @@ pre::-webkit-scrollbar-corner,
 
 .settings-text-input:focus {
   border-color: #7a7464;
+}
+
+@keyframes flash-green {
+  0%   { border-color: #4caf50; box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.4); }
+  70%  { border-color: #4caf50; box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.4); }
+  100% { border-color: #3a3530; box-shadow: none; }
+}
+
+@keyframes flash-red {
+  0%   { border-color: #f44336; box-shadow: 0 0 0 2px rgba(244, 67, 54, 0.4); }
+  70%  { border-color: #f44336; box-shadow: 0 0 0 2px rgba(244, 67, 54, 0.4); }
+  100% { border-color: #3a3530; box-shadow: none; }
+}
+
+.settings-text-input.name-flash-success {
+  animation: flash-green 0.8s ease forwards;
+}
+
+.settings-text-input.name-flash-error {
+  animation: flash-red 0.8s ease forwards;
 }
 
 .settings-btn {
