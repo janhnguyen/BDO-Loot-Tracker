@@ -249,50 +249,6 @@ class LocalStore:
                 for row in rows
             ]
 
-    def get_unuploaded_events(self, session_id: int) -> list[tuple[int, LootEvent]]:
-        with self._connect() as conn:
-            rows = conn.execute(
-                """
-                select
-                    e.id,
-                    e.character,
-                    e.zone,
-                    e.item_name,
-                    e.quantity,
-                    e.value,
-                    s.duration,
-                    s.avg_hour
-                from loot_events_local e
-                join sessions s on s.id = e.session_id
-                where e.session_id = ?
-                order by e.id asc
-                """,
-                (session_id,),
-            ).fetchall()
-
-        events: list[tuple[int, LootEvent]] = []
-        for row in rows:
-            duration_seconds = self._parse_duration(str(row["duration"] or "00:00:00"))
-            events.append(
-                (
-                    int(row["id"]),
-                    LootEvent(
-                        item_name=row["item_name"],
-                        quantity=int(row["quantity"]),
-                        zone=row["zone"],
-                        raw_text=f"session_total:{session_id}",
-                        character=row["character"],
-                        time=duration_seconds,
-                        avg_hour=float(row["avg_hour"] or 0.0),
-                    ),
-                )
-            )
-        return events
-
-    def upload_session_events(self, session_id: int) -> int:
-        rows = self.get_unuploaded_events(session_id)
-        return len(rows)
-
     def get_session_detail(self, session_id: int) -> dict:
         with self._connect() as conn:
             session_row = conn.execute(

@@ -13,8 +13,6 @@ else:
 load_dotenv(BASE_DIR / ".env")
 ENV_PATH = BASE_DIR / ".env"
 
-SUPABASE_URL   = os.getenv("SUPABASE_URL")
-SUPABASE_KEY   = os.getenv("SUPABASE_KEY")
 CHARACTER_NAME = os.getenv("CHARACTER_NAME", "MyCharacter")
 DEFAULT_ZONE   = os.getenv("DEFAULT_ZONE", "Unknown")
 

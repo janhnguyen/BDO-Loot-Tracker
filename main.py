@@ -128,13 +128,6 @@ def main():
     def list_sessions():
         return local_store.list_sessions()
 
-    def upload_session(session_id: int):
-        rows = local_store.get_unuploaded_events(session_id)
-        if not rows:
-            return f"Session {session_id}: nothing to upload."
-        uploaded_count = local_store.upload_session_events(session_id)
-        return f"Session {session_id}: prepared {uploaded_count}/{len(rows)} grouped totals for upload."
-
     # Status getter for log window
     def get_status():
         return tracker.is_running(), tracker.get_zone()
@@ -230,7 +223,6 @@ def main():
         stop_cb=stop_session,
         get_status_cb=get_status,
         list_sessions_cb=list_sessions,
-        upload_session_cb=upload_session,
         calibrate_cb=launch_calibration,
         show_ocr_default=SHOW_OCR_LOG,
         ocr_settings_changed_cb=save_ocr_settings,

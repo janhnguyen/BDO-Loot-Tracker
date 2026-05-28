@@ -1,3 +1,6 @@
+## v0.5.0 - ?? ??th, 2026
+- Removed old Supabase references
+
 ## v0.4.3 - May 27th, 2026
 - Update in-app updater
 
