@@ -11,14 +11,14 @@ if _png.exists():
     img.save(_ico, format='ICO', sizes=[(16, 16), (32, 32), (48, 48), (256, 256)])
 
 a = Analysis(
-    ['main.py'],
+    ['../main.py'],
     pathex=[],
     binaries=[],
     datas=[
-        ('ui/dist',     'ui/dist'),
+        ('../ui/dist',     'ui/dist'),
         ('CHANGELOG.md', '.'),
-        ('helpers/calibrate.py', 'helpers'),
-        ('favicon.ico', '.'),
+        ('../helpers/calibrate.py', 'helpers'),
+        ('../favicon.ico', '.'),
         ('version.txt', '.'),
     ],
     hiddenimports=[
@@ -73,7 +73,7 @@ exe = EXE(
     strip=False,
     upx=True,
     console=False,
-    icon='favicon.ico',
+    icon='../favicon.ico',
     manifest='app.manifest',
 )
 
@@ -90,7 +90,7 @@ coll = COLLECT(
 
 # Place env.example and items/ next to the exe (outside _internal)
 _dist = Path('dist') / 'BDO-Loot-Tracker'
-shutil.copy('env.example', str(_dist / '.env'))
+shutil.copy('helpers/env.example', str(_dist / '.env'))
 _items_dest = _dist / 'items'
 if _items_dest.exists():
     shutil.rmtree(_items_dest)

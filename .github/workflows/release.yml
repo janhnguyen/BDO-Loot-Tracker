@@ -22,7 +22,7 @@ jobs:
 
       - name: Write version.txt
         shell: bash
-        run: echo "$VERSION" > version.txt
+        run: echo "$VERSION" > helpers/version.txt
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -47,18 +47,18 @@ jobs:
           npm run build
 
       - name: Build executable (PyInstaller)
-        run: pyinstaller "BDO-Loot-Tracker.spec"
+        run: pyinstaller "helpers/BDO-Loot-Tracker.spec" --distpath dist
 
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y
 
       - name: Build installer
-        run: iscc installer.iss /DMyAppVersion=${{ env.VERSION }}
+        run: iscc helpers/installer.iss /DMyAppVersion=${{ env.VERSION }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: "v${{ env.VERSION }}"
-          body_path: CHANGELOG.md
+          body_path: helpers/CHANGELOG.md
           files: installer_output/BDO-Loot-Tracker-Setup-${{ env.VERSION }}.exe
           draft: true

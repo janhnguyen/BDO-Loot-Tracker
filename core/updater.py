@@ -23,9 +23,9 @@ def _parse(version: str) -> tuple[int, ...]:
 
 
 def read_current_version(resource_root: Path) -> str:
-    path = resource_root / "version.txt"
-    if path.exists():
-        return path.read_text(encoding="utf-8").strip()
+    for candidate in [resource_root / "version.txt", resource_root / "helpers" / "version.txt"]:
+        if candidate.exists():
+            return candidate.read_text(encoding="utf-8").strip()
     return "0.0.0"
 
 
