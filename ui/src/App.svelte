@@ -606,15 +606,13 @@
   <!-- Calibration required modal -->
   {#if state.needs_calibration && !dismissedCalibration}
     <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div class="modal-overlay" on:click={() => dismissedCalibration = true} on:keydown={(e) => e.key === 'Escape' && (dismissedCalibration = true)}>
+    <div class="modal-overlay">
       <div
         class="modal"
         role="dialog"
         aria-modal="true"
         tabindex="-1"
         bind:this={calibModalEl}
-        on:click|stopPropagation
-        on:keydown|stopPropagation={(e) => { if (e.key === 'Escape') dismissedCalibration = true; }}
       >
         <div class="modal-title">Calibration Required</div>
         <div class="modal-body">Your capture region hasn't been set up yet. Run calibration to tell the tracker where the loot log appears on your screen. For in-depth instructions, <a class="modal-link" href="https://github.com/janhnguyen/BDO-Loot-Tracker/tree/dev#calibration" target="_blank" rel="noreferrer">visit the setup guide</a>. If you need additional help, join the <a class="modal-link" href="https://discord.gg/uZYJfGphBP" target="_blank" rel="noreferrer">Discord server</a>.</div>
