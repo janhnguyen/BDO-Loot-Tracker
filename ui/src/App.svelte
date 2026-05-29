@@ -359,10 +359,13 @@
     if (e.key === 'Escape') closeSidebar();
   }
 
+  let dismissedCalibration = false;
+
   let liveLogEl;
   let liveLogAtBottom = true;
   let modalEl;
   let wipeModalEl;
+  let calibModalEl;
 
   function onLiveLogScroll() {
     if (!liveLogEl) return;
@@ -378,6 +381,9 @@
     }
     if (confirmWipeDb && wipeModalEl) {
       wipeModalEl.focus();
+    }
+    if (state.needs_calibration && !dismissedCalibration && calibModalEl) {
+      calibModalEl.focus();
     }
   });
 
@@ -511,7 +517,7 @@
               {/if}
             </div>
           {:else}
-            <div class="detail-no-timeline">No time-series data — recorded before tracking was added.</div>
+            <div class="detail-no-timeline">No time-series data was recorded.</div>
           {/if}
 
           <!-- Items breakdown -->
@@ -592,6 +598,29 @@
         <div class="modal-actions">
           <button class="modal-btn-cancel" on:click={() => confirmWipeDb = false}>Cancel</button>
           <button class="modal-btn-delete" on:click={confirmWipe}>Wipe</button>
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Calibration required modal -->
+  {#if state.needs_calibration && !dismissedCalibration}
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div class="modal-overlay" on:click={() => dismissedCalibration = true} on:keydown={(e) => e.key === 'Escape' && (dismissedCalibration = true)}>
+      <div
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        tabindex="-1"
+        bind:this={calibModalEl}
+        on:click|stopPropagation
+        on:keydown|stopPropagation={(e) => { if (e.key === 'Escape') dismissedCalibration = true; }}
+      >
+        <div class="modal-title">Calibration Required</div>
+        <div class="modal-body">Your capture region hasn't been set up yet. Run calibration to tell the tracker where the loot log appears on your screen. For in-depth instructions, <a class="modal-link" href="https://github.com/janhnguyen/BDO-Loot-Tracker/tree/dev#calibration" target="_blank" rel="noreferrer">visit the setup guide</a>. If you need additional help, join the <a class="modal-link" href="https://discord.gg/uZYJfGphBP" target="_blank" rel="noreferrer">Discord server</a>.</div>
+        <div class="modal-actions">
+          <button class="modal-btn-cancel" on:click={() => dismissedCalibration = true}>Dismiss</button>
+          <button class="modal-btn-confirm" on:click={() => { dismissedCalibration = true; api('calibrate'); }}>Calibrate Now</button>
         </div>
       </div>
     </div>

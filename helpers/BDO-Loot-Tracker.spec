@@ -16,7 +16,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ('../ui/dist',     'ui/dist'),
-        ('CHANGELOG.md', '.'),
+        ('CHANGELOG.md', 'helpers'),
         ('../helpers/calibrate.py', 'helpers'),
         ('../favicon.ico', '.'),
         ('version.txt', '.'),

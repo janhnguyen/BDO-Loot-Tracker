@@ -977,6 +977,32 @@ pre::-webkit-scrollbar-corner,
   border-color: #f07070;
 }
 
+.modal-link {
+  color: #50c878;
+  text-decoration: underline;
+}
+
+.modal-link:hover {
+  color: #70e898;
+}
+
+.modal-btn-confirm {
+  background: #0f2218;
+  border: 1px solid #50c878;
+  color: #50c878;
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.modal-btn-confirm:hover {
+  background: #1a3a28;
+  color: #70e898;
+  border-color: #70e898;
+}
+
 /* ── Session detail overlay ───────────────────────────────────────────────── */
 
 .detail-overlay {

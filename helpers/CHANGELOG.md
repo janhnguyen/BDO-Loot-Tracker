@@ -1,3 +1,6 @@
+## v0.0.0 - ???
+- Improved new user experience
+
 ## v0.5.0 - May 28th, 2026
 - Desktop UI retains size
 - UI changes
