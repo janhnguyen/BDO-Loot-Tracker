@@ -20,8 +20,13 @@ from core.config import (
     KEYBIND_PAUSE,
     KEYBIND_STOP,
     CHARACTER_NAME,
+    DEFAULT_ZONE,
     save_env_setting,
     ENV_PATH,
+    REGION_LEFT_PCT,
+    REGION_TOP_PCT,
+    REGION_RIGHT_PCT,
+    REGION_BOTTOM_PCT,
 )
 from core.parser import get_item_zone, is_dehkia_two_indicator, get_dehkia_two_upgrade, parse_loot_with_raw
 from core.arsha_market_source import fetch_arsha_hotlist
@@ -30,6 +35,12 @@ from core import updater as _updater
 def main():
     log_window = None
     local_store = LocalStore(LOCAL_DB_PATH)
+    _needs_calibration = (
+        REGION_LEFT_PCT == 0.0
+        and REGION_TOP_PCT == 0.0
+        and REGION_RIGHT_PCT == 0.0
+        and REGION_BOTTOM_PCT == 0.0
+    )
     current_session_id = None
     pending_dehkia_upgrade = False
     _session_logger: SessionLogger | None = None
@@ -133,8 +144,10 @@ def main():
             return
         final_zone = tracker.get_zone()
         tracker.stop()
+        tracker.set_zone(DEFAULT_ZONE)
         log_window.clear_totals()
         elapsed_seconds = log_window.stop_timer()
+        log_window.reset_timer()
         if current_session_id is not None:
             local_store.end_session(current_session_id, elapsed_seconds)
             current_session_id = None
@@ -165,14 +178,18 @@ def main():
 
         def _reload_region():
             proc.wait()
+            if proc.returncode != 0:
+                log_window._append_system("Calibration cancelled.")
+                return
             load_dotenv(ENV_PATH, override=True)
             tracker.set_region(
-                float(os.getenv("REGION_LEFT_PCT", "0.65")),
-                float(os.getenv("REGION_TOP_PCT", "0.72")),
-                float(os.getenv("REGION_RIGHT_PCT", "1.0")),
-                float(os.getenv("REGION_BOTTOM_PCT", "0.88")),
+                float(os.getenv("REGION_LEFT_PCT", "0")),
+                float(os.getenv("REGION_TOP_PCT", "0")),
+                float(os.getenv("REGION_RIGHT_PCT", "0")),
+                float(os.getenv("REGION_BOTTOM_PCT", "0")),
             )
-            log_window._append_system("Calibration saved — capture region updated.")
+            log_window._needs_calibration = False
+            log_window._append_system("Calibration saved.")
 
         threading.Thread(target=_reload_region, daemon=True).start()
         return "Calibration launched."
@@ -245,6 +262,7 @@ def main():
 
     # Create the log window with start/stop callbacks
     log_window = LogWindow(
+        needs_calibration=_needs_calibration,
         start_cb=start_session,
         stop_cb=stop_session,
         get_status_cb=get_status,

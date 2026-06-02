@@ -314,6 +314,7 @@ class LocalStore:
         with self._connect() as conn:
             conn.execute("pragma foreign_keys = on")
             conn.execute("delete from sessions")
+            conn.execute("delete from sqlite_sequence where name = 'sessions'")
 
     def get_db_stats(self) -> dict:
         with self._connect() as conn:

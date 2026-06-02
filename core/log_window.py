@@ -21,7 +21,7 @@ _RESOURCE_ROOT = (
     Path(sys._MEIPASS) if getattr(sys, "frozen", False)
     else Path(__file__).resolve().parents[1]
 )
-_CHANGELOG_PATH = _RESOURCE_ROOT / "CHANGELOG.md"
+_CHANGELOG_PATH = _RESOURCE_ROOT / "helpers" / "CHANGELOG.md"
 
 from PySide6.QtCore import QTimer, QUrl
 from PySide6.QtGui import QIcon
@@ -81,6 +81,7 @@ class LogWindow:
         keybind_pause_default: str = "Control+Shift+S",
         keybind_stop_default: str = "Control+Shift+D",
         character_name_default: str = "MyCharacter",
+        needs_calibration: bool = False,
     ):
         self.get_status_cb = get_status_cb
         self.start_cb = start_cb
@@ -119,6 +120,8 @@ class LogWindow:
         self._update_downloading = False
         self._update_download_progress = 0
         self._update_cancelled = False
+
+        self._needs_calibration = needs_calibration
 
         self.show_ocr = show_ocr_default
         self.show_ocr_pane = show_ocr_pane_default
@@ -267,6 +270,11 @@ class LogWindow:
             self._timer_started_at = None
             return self._timer_elapsed_seconds
 
+    def reset_timer(self):
+        with self._lock:
+            self._timer_started_at = None
+            self._timer_elapsed_seconds = 0.0
+
     @staticmethod
     def _format_duration(seconds: float) -> str:
         total_seconds = int(max(0.0, seconds))
@@ -343,6 +351,7 @@ class LogWindow:
                 "keybind_pause": self._keybind_pause,
                 "keybind_stop": self._keybind_stop,
                 "character_name": self._character_name,
+                "needs_calibration": self._needs_calibration,
                 "current_version": self._current_version,
                 "latest_version": self._latest_version,
                 "update_available": self._update_available,
@@ -362,6 +371,8 @@ class LogWindow:
             self.resume_cb()
         elif action == "stop" and self.stop_cb:
             self.stop_cb()
+            with self._lock:
+                self._logs = []
         elif action == "calibrate" and self.calibrate_cb:
             message = self.calibrate_cb()
             if message:
@@ -595,6 +606,10 @@ class LogWindow:
             from PySide6.QtGui import QColor
             view = QWebEngineView()
             view.page().setBackgroundColor(QColor("#2b2b2b"))
+            import webbrowser as _webbrowser
+            view.page().newWindowRequested.connect(
+                lambda req: _webbrowser.open(req.requestedUrl().toString())
+            )
 
             _favicon = _RESOURCE_ROOT / "ui" / "dist" / "favicon.png"
             _base_url = QUrl.fromLocalFile(str(_RESOURCE_ROOT / "ui" / "dist") + "/")

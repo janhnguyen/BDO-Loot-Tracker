@@ -1,22 +1,10 @@
 """
-calibrate_gui.py
-────────────────────────────────────────────────────────────────
-BDO Loot Tracker - Visual Calibration Tool
-
-A fullscreen overlay that lets you drag a box over exactly the
-loot notification area.
-
-Usage:
-    python calibrate.py                        # capture live screen
-    python calibrate.py --image screenshot.png # load a saved image for debugging
-
 Controls:
     • Click + drag  → draw the capture region
     • Drag edges/corners  → resize
     • Space / Enter  → confirm and run OCR test
     • R  → reset selection
     • Escape  → quit without saving
-────────────────────────────────────────────────────────────────
 """
 
 from __future__ import annotations
@@ -33,18 +21,28 @@ from pathlib import Path
 from PIL import Image, ImageTk, ImageEnhance, ImageFilter, ImageDraw, ImageFont
 import mss
 
-# ── Tesseract OCR ─────────────────────────────────────────────
 try:
     import pytesseract
     HAS_OCR = True
 except ImportError:
     HAS_OCR = False
 
-# ── Config ────────────────────────────────────────────────────
+# Config
 if getattr(sys, "frozen", False):
     TRACKER_FILE = Path(sys.executable).parent / ".env"
 else:
     TRACKER_FILE = Path(__file__).resolve().parent.parent / ".env"
+
+try:
+    from dotenv import load_dotenv as _load_dotenv
+    _load_dotenv(TRACKER_FILE, override=True)
+except ImportError:
+    pass
+
+_ENV_LEFT   = float(os.getenv("REGION_LEFT_PCT",   "0"))
+_ENV_TOP    = float(os.getenv("REGION_TOP_PCT",    "0"))
+_ENV_RIGHT  = float(os.getenv("REGION_RIGHT_PCT",  "0"))
+_ENV_BOTTOM = float(os.getenv("REGION_BOTTOM_PCT", "0"))
 
 ACCENT      = "#D4A017"   # BDO gold
 ACCENT_DIM  = "#9A7510"
@@ -59,14 +57,13 @@ MIN_SIZE    = 40          # minimum box dimension in px
 # Debug image is written next to this script each time OCR is confirmed
 DEBUG_IMAGE_PATH = Path(__file__).parent / "calibration_debug.png"
 
-# ═════════════════════════════════════════════════════════════
 class CalibrationApp:
 
     def __init__(self, source_image: Image.Image | None = None):
         self.root = tk.Tk()
         self.root.title("BDO Loot Tracker – Calibration")
 
-        # ── acquire background image ──────────────────────────
+        # acquire background image
         if source_image is not None:
             # --image mode: use the provided image as-is.
             # Treat its dimensions as the "screen" so percentages
@@ -87,7 +84,7 @@ class CalibrationApp:
         # dim the screenshot so the selection stands out
         self.dim_img = ImageEnhance.Brightness(self.full_img).enhance(0.35)
 
-        # ── window setup ──────────────────────────────────────
+        # window setup
         self.root.attributes("-fullscreen", True)
         self.root.attributes("-topmost", True)
         self.root.configure(bg=BG_OVERLAY)
@@ -107,12 +104,12 @@ class CalibrationApp:
         self._bg_tk = ImageTk.PhotoImage(self.dim_img)
         self.canvas.create_image(0, 0, anchor="nw", image=self._bg_tk)
 
-        # ── selection state ───────────────────────────────────
+        # selection state 
         # current selection in screen pixels
-        self.sel = {"x1": int(self.screen_w * 0.65),
-                    "y1": int(self.screen_h * 0.72),
-                    "x2": self.screen_w,
-                    "y2": int(self.screen_h * 0.88)}
+        self.sel = {"x1": int(self.screen_w * _ENV_LEFT),
+                    "y1": int(self.screen_h * _ENV_TOP),
+                    "x2": int(self.screen_w * _ENV_RIGHT),
+                    "y2": int(self.screen_h * _ENV_BOTTOM)}
         self._drag_mode = None   # "new" | "move" | "n","s","e","w","ne",…
         self._drag_origin = (0, 0)
         self._sel_origin  = dict(self.sel)
@@ -123,7 +120,7 @@ class CalibrationApp:
         self._handle_ids     = []
         self._label_ids      = []
 
-        # ── OCR result panel ──────────────────────────────────
+        # OCR result panel 
         self._ocr_frame = tk.Frame(
             self.root, bg="#12101C",
             highlightbackground=ACCENT, highlightthickness=1,
@@ -148,7 +145,7 @@ class CalibrationApp:
         )
         self._ocr_hint.pack(anchor="w")
 
-        # ── bindings ──────────────────────────────────────────
+        # bindings 
         self.canvas.bind("<ButtonPress-1>",   self._on_press)
         self.canvas.bind("<B1-Motion>",       self._on_drag)
         self.canvas.bind("<ButtonRelease-1>", self._on_release)
@@ -162,9 +159,7 @@ class CalibrationApp:
         self._redraw()
         self._draw_instructions()
 
-    # ─────────────────────────────────────────────────────────
-    #  Selection geometry helpers
-    # ─────────────────────────────────────────────────────────
+    # Selection geometry helpers
 
     def _norm(self) -> tuple[int,int,int,int]:
         """Return (x1,y1,x2,y2) with x1<x2, y1<y2."""
@@ -210,9 +205,7 @@ class CalibrationApp:
         if in_x and in_y: return "move"
         return None
 
-    # ─────────────────────────────────────────────────────────
-    #  Mouse events
-    # ─────────────────────────────────────────────────────────
+    # Mouse events
 
     def _on_hover(self, ev):
         zone = self._hit_zone(ev.x, ev.y)
@@ -267,9 +260,7 @@ class CalibrationApp:
     def _on_release(self, _ev):
         self._drag_mode = None
 
-    # ─────────────────────────────────────────────────────────
-    #  Drawing
-    # ─────────────────────────────────────────────────────────
+    # Drawing
 
     def _redraw(self):
         # remove old overlays
@@ -285,14 +276,14 @@ class CalibrationApp:
         x1,y1,x2,y2 = self._norm()
         W,H = self.screen_w, self.screen_h
 
-        # ── bright preview inside selection ──────────────────
+        # bright preview inside selection 
         crop = self.full_img.crop((x1, y1, x2, y2))
         self._preview_tk = ImageTk.PhotoImage(crop)
         self._preview_img_id = self.canvas.create_image(
             x1, y1, anchor="nw", image=self._preview_tk
         )
 
-        # ── four dark quadrants outside selection ─────────────
+        # four dark quadrants outside selection 
         quads = [
             (0,   0,  W,  y1),   # top bar
             (0,  y2,  W,   H),   # bottom bar
@@ -307,7 +298,7 @@ class CalibrationApp:
                 )
                 self._overlay_ids.append(iid)
 
-        # ── selection border ──────────────────────────────────
+        # selection border 
         border = self.canvas.create_rectangle(
             x1, y1, x2, y2,
             outline=ACCENT, width=2, fill=""
@@ -321,7 +312,7 @@ class CalibrationApp:
         )
         self._overlay_ids.append(dashed)
 
-        # ── corner + edge handles ─────────────────────────────
+        # corner + edge handles 
         cx, cy = (x1+x2)//2, (y1+y2)//2
         handle_pts = [
             (x1,y1),(x2,y1),(x1,y2),(x2,y2),  # corners
@@ -334,7 +325,7 @@ class CalibrationApp:
             )
             self._handle_ids.append(h)
 
-        # ── dimension label ───────────────────────────────────
+        # dimension label 
         pw, ph = x2-x1, y2-y1
         p = self._pcts()
         dim_txt = (f"{pw}×{ph} px   "
@@ -356,7 +347,7 @@ class CalibrationApp:
         )
         self._label_ids += [pill, label]
 
-        # ── hint bar at bottom ────────────────────────────────
+        # hint bar at bottom 
         hint_bg = self.canvas.create_rectangle(
             0, H-36, W, H,
             fill="#12101C", outline=""
@@ -378,9 +369,7 @@ class CalibrationApp:
             fill=ACCENT, font=("Courier", 13, "bold"), anchor="center"
         )
 
-    # ─────────────────────────────────────────────────────────
-    #  OCR panel
-    # ─────────────────────────────────────────────────────────
+    # OCR panel
 
     def _hide_ocr_panel(self):
         self._ocr_frame.place_forget()
@@ -411,9 +400,7 @@ class CalibrationApp:
         self._ocr_frame.place(x=px, y=py, width=panel_w)
         self._ocr_frame.lift()
 
-    # ─────────────────────────────────────────────────────────
-    #  Actions
-    # ─────────────────────────────────────────────────────────
+    # Actions
 
     def _save_debug_image(self, raw_img: Image.Image, proc_img: Image.Image,
                           ocr_text: str, found_loot: bool):
@@ -457,7 +444,7 @@ class CalibrationApp:
 
         border_col = "#50C878" if found_loot else "#D4A017"
 
-        # ── left panel: raw crop ──────────────────────────────
+        # left panel: raw crop 
         draw.rectangle([0, 0, BORDER + sw + GAP//2 - 1, BORDER + sh + BORDER - 1],
                        outline=border_col, width=BORDER)
         debug.paste(raw_img, (BORDER, BORDER))
@@ -465,14 +452,14 @@ class CalibrationApp:
         # label
         draw.text((BORDER + 4, BORDER + 4), "RAW", font=_font, fill=border_col)
 
-        # ── right panel: preprocessed ─────────────────────────
+        # right panel: preprocessed 
         rx = BORDER + sw + GAP
         draw.rectangle([rx - GAP//2, 0, total_w - 1, BORDER + sh + BORDER - 1],
                        outline="#5599FF", width=BORDER)
         debug.paste(proc_rgb, (rx, BORDER))
         draw.text((rx + 4, BORDER + 4), "TESSERACT INPUT", font=_font, fill="#5599FF")
 
-        # ── info bar ──────────────────────────────────────────
+        # info bar 
         bar_y = BORDER + sh + BORDER
         draw.rectangle([0, bar_y, total_w - 1, bar_y + BAR_H - 1], fill="#12101C")
         info = (f"  L:{p['left']:.4f}  T:{p['top']:.4f}  "
@@ -481,7 +468,7 @@ class CalibrationApp:
         draw.text((PADDING, bar_y + (BAR_H - FONT_SIZE) // 2),
                   info, font=_font, fill="#D4A017")
 
-        # ── OCR text block ────────────────────────────────────
+        # OCR text block 
         text_y = bar_y + BAR_H
         draw.rectangle([0, text_y, total_w - 1, total_h - 1], fill="#0D0B14")
         header_col = "#50C878" if found_loot else "#D4A017"
@@ -497,10 +484,10 @@ class CalibrationApp:
 
     def _reset(self):
         self._hide_ocr_panel()
-        self.sel = {"x1": int(self.screen_w * 0.65),
-                    "y1": int(self.screen_h * 0.72),
-                    "x2": self.screen_w,
-                    "y2": int(self.screen_h * 0.88)}
+        self.sel = {"x1": 0,
+                    "y1": 0,
+                    "x2": 0,
+                    "y2": 0}
         self._redraw()
 
     def _confirm(self):
@@ -536,13 +523,13 @@ class CalibrationApp:
         p = self._pcts()
         self._patch_tracker_file(p)
         self.root.destroy()
+        sys.exit(0)
 
     def _quit(self):
         self.root.destroy()
+        sys.exit(1)
 
-    # ─────────────────────────────────────────────────────────
-    #  Patch main.py in-place
-    # ─────────────────────────────────────────────────────────
+    # Patch main.py in-place
 
     def _patch_tracker_file(self, p: dict):
         replacements = {
@@ -579,13 +566,11 @@ class CalibrationApp:
         for var, val in replacements.items():
             print(f"  {var}={val}")
 
-    # ─────────────────────────────────────────────────────────
-
     def run(self):
         self.root.mainloop()
 
 
-# ── OCR helper ───────────────────────────────────────────────
+# OCR helper 
 
 def preprocess_for_ocr(pil_img: Image.Image) -> Image.Image:
     """
@@ -616,14 +601,10 @@ def preprocess_for_ocr(pil_img: Image.Image) -> Image.Image:
     out = out.filter(ImageFilter.MinFilter(3))
     return out
 
-
 def _run_ocr(pil_img: Image.Image) -> str:
     """Pre-process then run Tesseract. PSM 6 = uniform block of text."""
     processed = preprocess_for_ocr(pil_img)
     return pytesseract.image_to_string(processed, config="--psm 6")
-
-
-# ── Entry point ───────────────────────────────────────────────
 
 if __name__ == "__main__":
     import argparse

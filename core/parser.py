@@ -155,7 +155,7 @@ def _norm_digits(s: str) -> str:
 def _parse_single_line(line: str) -> tuple[str, int] | None:
     """Return (item_name, qty) if line contains a recognised item, else None."""
     line_stripped = re.sub(r'\bevent\b', '', line.replace("[", "").replace("]", ""), flags=re.IGNORECASE).strip()
-    line_stripped = line_stripped.replace('’', "'").replace('‘', "'").replace('`', "'").replace('THAN', 'HAN')
+    line_stripped = line_stripped.replace('’', "'").replace('‘', "'").replace('`', "'").replace(',',"").replace('THAN', 'HAN')
     line_lc = line_stripped.lower()
     for name in ITEM_NAMES:
         idx = line_lc.find(name.lower())
