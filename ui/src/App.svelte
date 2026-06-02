@@ -31,115 +31,92 @@
     '#50c8c8', '#e09050', '#a0c850', '#e05090', '#8090e0',
   ];
 
-  let chartMode = 'silver'; // 'silver' | 'items'
+  let hiddenItems = new Set();
+  let tooltip = null;
 
-  $: timelineChart = buildTimelineChart(sessionDetail?.timeline ?? []);
-  $: itemsChart = buildItemsChart(sessionDetail?.timeline ?? []);
+  $: stackedBarChart = buildStackedBarChart(sessionDetail?.timeline ?? [], hiddenItems);
   $: maxItemValue = Math.max(...(sessionDetail?.items ?? []).map(i => i.value), 1);
 
-  function buildTimelineChart(timeline) {
+  function buildStackedBarChart(timeline, hidden = new Set()) {
     if (!timeline.length) return null;
-    const maxT = Math.max(...timeline.map(e => e.elapsed_seconds), 1);
-    const totalV = timeline.reduce((s, e) => s + e.value, 0);
-    if (totalV === 0) return null;
 
-    let cum = 0;
-    const pts = [];
+    // Bucket silver value by minute and item
+    const buckets = {};
+    const itemTotals = {};
     for (const e of timeline) {
-      cum += e.value;
-      pts.push([
-        (e.elapsed_seconds / maxT) * CW,
-        CH - (cum / totalV) * CH,
-      ]);
+      if (!e.value) continue;
+      const min = Math.floor(e.elapsed_seconds / 60);
+      if (!buckets[min]) buckets[min] = {};
+      buckets[min][e.item_name] = (buckets[min][e.item_name] ?? 0) + e.value;
+      itemTotals[e.item_name] = (itemTotals[e.item_name] ?? 0) + e.value;
     }
 
-    const polyline = pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
-    const area = `0,${CH} ${polyline} ${CW},${CH}`;
+    const totalSilver = Object.values(itemTotals).reduce((s, v) => s + v, 0);
+    if (totalSilver === 0) return null;
 
-    const yLabels = [0, 0.5, 1].map(f => ({
-      y: CH - f * CH,
-      text: fmtSilver(totalV * f),
-    }));
-    const xLabels = [0, 0.25, 0.5, 0.75, 1].map(f => ({
-      x: f * CW,
-      text: fmtElapsed(maxT * f),
-    }));
+    // Top 10 items by total silver (colors stay fixed regardless of visibility)
+    const topItems = Object.entries(itemTotals)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([name, total], idx) => ({ name, total, color: CHART_COLORS[idx % CHART_COLORS.length] }));
 
-    return { polyline, area, yLabels, xLabels };
-  }
+    const maxMin = Math.max(...Object.keys(buckets).map(Number));
+    const allMinutes = Array.from({ length: maxMin + 1 }, (_, i) => i);
 
-  function buildItemsChart(timeline) {
-    if (!timeline.length) return null;
-    const maxT = Math.max(...timeline.map(e => e.elapsed_seconds), 1);
+    // Y-scale based only on visible items
+    const visibleItems = topItems.filter(i => !hidden.has(i.name));
+    const maxBarTotal = Math.max(...allMinutes.map(m => {
+      const b = buckets[m] ?? {};
+      return visibleItems.reduce((s, item) => s + (b[item.name] ?? 0), 0);
+    }), 1);
 
-    // Group by item name
-    const byItem = {};
-    for (const e of timeline) {
-      (byItem[e.item_name] ??= []).push(e);
-    }
+    const barSlotW = CW / Math.max(allMinutes.length, 1);
+    const barW = Math.max(barSlotW * 0.75, 1.5);
+    const barOffset = (barSlotW - barW) / 2;
 
-    // Sort by total qty desc, cap at top 10
-    let items = Object.entries(byItem).map(([name, evts]) => ({
-      name,
-      events: evts.slice().sort((a, b) => a.elapsed_seconds - b.elapsed_seconds),
-      total: evts.reduce((s, e) => s + e.quantity, 0),
-    }));
-    items.sort((a, b) => b.total - a.total);
-    items = items.slice(0, 10);
-
-    // Per-item normalisation: if total > 10 000, show per-1 000
-    items = items.map(item => ({ ...item, scale: item.total > 10000 ? 1000 : 1 }));
-
-    // Shared Y max across normalised values
-    const maxY = Math.max(...items.map(i => i.total / i.scale), 1);
-
-    // Build step-function polylines (discrete loot events)
-    const series = items.map((item, idx) => {
-      let cum = 0;
-      let prevY = CH;
-      const pts = [`0,${CH}`];
-      for (const e of item.events) {
-        const x = (e.elapsed_seconds / maxT) * CW;
-        // horizontal segment at previous level, then jump up
-        pts.push(`${x.toFixed(1)},${prevY.toFixed(1)}`);
-        cum += e.quantity;
-        const y = CH - (cum / item.scale / maxY) * CH;
-        pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
-        prevY = y;
+    const bars = allMinutes.map((min, i) => {
+      const b = buckets[min] ?? {};
+      let stackY = CH;
+      const segments = [];
+      for (const item of visibleItems) {
+        const v = b[item.name] ?? 0;
+        if (!v) continue;
+        const h = (v / maxBarTotal) * CH;
+        stackY -= h;
+        segments.push({ color: item.color, y: stackY, h, name: item.name, value: v });
       }
-      pts.push(`${CW},${prevY.toFixed(1)}`); // extend to right edge
-      return {
-        name: item.name,
-        points: pts.join(' '),
-        total: item.total,
-        scale: item.scale,
-        color: CHART_COLORS[idx % CHART_COLORS.length],
-      };
+      return { x: i * barSlotW + barOffset, segments };
     });
 
-    const yLabels = [0, 0.5, 1].map(f => ({
+    const yLabels = [0, 0.25, 0.5, 0.75, 1].map(f => ({
       y: CH - f * CH,
-      text: Math.round(maxY * f).toLocaleString(),
-    }));
-    const xLabels = [0, 0.25, 0.5, 0.75, 1].map(f => ({
-      x: f * CW,
-      text: fmtElapsed(maxT * f),
+      text: fmtSilver(maxBarTotal * f),
     }));
 
-    return { series, yLabels, xLabels };
+    const labelStep = Math.max(1, Math.ceil(allMinutes.length / 5));
+    const xLabels = allMinutes
+      .filter(m => m % labelStep === 0 || m === maxMin)
+      .map(m => ({ x: m * barSlotW + barSlotW / 2, text: `${m}m` }));
+
+    return { bars, barW, yLabels, xLabels, topItems };
   }
 
-  function fmtElapsed(seconds) {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
-    if (h > 0) return `${h}h${m}m`;
-    if (m > 0) return `${m}m${s}s`;
-    return `${s}s`;
+  function toggleHiddenItem(name) {
+    if (hiddenItems.has(name)) hiddenItems.delete(name);
+    else hiddenItems.add(name);
+    hiddenItems = hiddenItems; // trigger reactivity
+  }
+
+  function showTooltip(e, name, value) {
+    tooltip = { x: e.clientX, y: e.clientY, name, value };
+  }
+
+  function hideTooltip() {
+    tooltip = null;
   }
 
   async function openSessionDetail(id) {
-    chartMode = 'silver';
+    hiddenItems = new Set();
     sessionDetailLoading = true;
     sessionDetail = null;
     try {
@@ -397,6 +374,13 @@
 
 <svelte:window on:keydown={onGlobalKeydown} />
 
+{#if tooltip}
+  <div class="chart-tooltip" style="left:{tooltip.x + 14}px; top:{tooltip.y - 10}px;">
+    <div class="chart-tooltip-name">{tooltip.name}</div>
+    <div class="chart-tooltip-value">{fmtSilver(tooltip.value)}</div>
+  </div>
+{/if}
+
 <div class="ui-root">
 
   <!-- Session detail overlay -->
@@ -439,82 +423,56 @@
           </div>
 
           <!-- Chart section -->
-          {#if timelineChart}
-            <div class="detail-chart-header">
-              <div class="detail-section-label" style="margin: 0;">
-                {chartMode === 'silver' ? 'Silver Earned Over Time' : 'Items Obtained Over Time'}
-              </div>
-              <div class="chart-toggle">
-                <button
-                  class="chart-toggle-btn"
-                  class:chart-toggle-active={chartMode === 'silver'}
-                  on:click={() => chartMode = 'silver'}
-                >Silver</button>
-                <button
-                  class="chart-toggle-btn"
-                  class:chart-toggle-active={chartMode === 'items'}
-                  on:click={() => chartMode = 'items'}
-                >Items</button>
-              </div>
-            </div>
-
+          {#if stackedBarChart}
             <div class="detail-chart-wrap">
-              {#if chartMode === 'silver'}
-                <svg class="detail-chart-svg" viewBox="0 0 {CW + 80} {CH + 50}">
-                  {#each timelineChart.yLabels as lbl}
-                    <line x1="60" y1={lbl.y + 10} x2={CW + 60} y2={lbl.y + 10} class="chart-grid" />
-                    <text x="56" y={lbl.y + 14} text-anchor="end" class="chart-label">{lbl.text}</text>
-                  {/each}
-                  <g transform="translate(60, 10)">
-                    <polygon points={timelineChart.area} class="chart-area" />
-                    <polyline points={timelineChart.polyline} class="chart-line" />
-                    <line x1="0" y1={CH} x2={CW} y2={CH} class="chart-axis" />
-                    <line x1="0" y1="0" x2="0" y2={CH} class="chart-axis" />
-                  </g>
-                  {#each timelineChart.xLabels as lbl}
-                    <text x={lbl.x + 60} y={CH + 30} text-anchor="middle" class="chart-label">{lbl.text}</text>
-                  {/each}
-                </svg>
-
-              {:else if itemsChart}
-                <svg class="detail-chart-svg" viewBox="0 0 {CW + 80} {CH + 50}">
-                  {#each itemsChart.yLabels as lbl}
-                    <line x1="60" y1={lbl.y + 10} x2={CW + 60} y2={lbl.y + 10} class="chart-grid" />
-                    <text x="56" y={lbl.y + 14} text-anchor="end" class="chart-label">{lbl.text}</text>
-                  {/each}
-                  <g transform="translate(60, 10)">
-                    {#each itemsChart.series as s}
-                      <polyline
-                        points={s.points}
-                        fill="none"
-                        stroke={s.color}
-                        stroke-width="1.5"
-                        stroke-linejoin="round"
-                        stroke-linecap="round"
+              <svg class="detail-chart-svg" viewBox="0 0 {CW + 80} {CH + 50}">
+                {#each stackedBarChart.yLabels as lbl}
+                  <line x1="60" y1={lbl.y + 10} x2={CW + 60} y2={lbl.y + 10} class="chart-grid" />
+                  <text x="56" y={lbl.y + 14} text-anchor="end" class="chart-label">{lbl.text}</text>
+                {/each}
+                <g transform="translate(60, 10)">
+                  {#each stackedBarChart.bars as bar}
+                    {#each bar.segments as seg}
+                      <!-- svelte-ignore a11y-no-static-element-interactions -->
+                      <rect
+                        x={bar.x}
+                        y={seg.y}
+                        width={stackedBarChart.barW}
+                        height={seg.h}
+                        fill={seg.color}
+                        rx="1"
+                        style="cursor:default"
+                        on:mouseenter={(e) => showTooltip(e, seg.name, seg.value)}
+                        on:mousemove={(e) => showTooltip(e, seg.name, seg.value)}
+                        on:mouseleave={hideTooltip}
                       />
                     {/each}
-                    <line x1="0" y1={CH} x2={CW} y2={CH} class="chart-axis" />
-                    <line x1="0" y1="0" x2="0" y2={CH} class="chart-axis" />
-                  </g>
-                  {#each itemsChart.xLabels as lbl}
-                    <text x={lbl.x + 60} y={CH + 30} text-anchor="middle" class="chart-label">{lbl.text}</text>
                   {/each}
-                </svg>
+                  <line x1="0" y1={CH} x2={CW} y2={CH} class="chart-axis" />
+                  <line x1="0" y1="0" x2="0" y2={CH} class="chart-axis" />
+                </g>
+                {#each stackedBarChart.xLabels as lbl}
+                  <text x={lbl.x + 60} y={CH + 30} text-anchor="middle" class="chart-label">{lbl.text}</text>
+                {/each}
+              </svg>
 
-                <!-- Legend -->
-                <div class="chart-legend">
-                  {#each itemsChart.series as s}
-                    <div class="chart-legend-item">
-                      <span class="chart-legend-dot" style="background:{s.color}"></span>
-                      <span class="chart-legend-name" title={s.name}>{s.name}</span>
-                      {#if s.scale === 1000}
-                        <span class="chart-legend-unit">per 1K</span>
-                      {/if}
-                      <span class="chart-legend-total">×{s.total.toLocaleString()}</span>
-                    </div>
-                  {/each}
-                </div>
-              {/if}
+              <!-- Legend -->
+              <div class="chart-legend">
+                {#each stackedBarChart.topItems as item}
+                  <!-- svelte-ignore a11y-no-static-element-interactions -->
+                  <div
+                    class="chart-legend-item chart-legend-item-toggle"
+                    class:chart-legend-item-hidden={hiddenItems.has(item.name)}
+                    on:click={() => toggleHiddenItem(item.name)}
+                    on:keydown={(e) => e.key === 'Enter' && toggleHiddenItem(item.name)}
+                    title={hiddenItems.has(item.name) ? 'Click to show' : 'Click to hide'}
+                  >
+                    <span class="chart-legend-dot" style="background:{item.color}"></span>
+                    <span class="chart-legend-name" title={item.name}>{item.name}</span>
+                    <span class="chart-legend-total">{fmtSilver(item.total)}</span>
+                  </div>
+                {/each}
+              </div>
             </div>
           {:else}
             <div class="detail-no-timeline">No time-series data was recorded.</div>

@@ -1,5 +1,8 @@
-## v0.0.0 - ???
+## v0.6.0 - June 2nd, 2026
 - Improved new user experience
+- Session analytics overhaul
+- Live Log now clears itself when a session is stopped
+- Improved calibration sequence
 
 ## v0.5.0 - May 28th, 2026
 - Desktop UI retains size

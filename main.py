@@ -20,6 +20,7 @@ from core.config import (
     KEYBIND_PAUSE,
     KEYBIND_STOP,
     CHARACTER_NAME,
+    DEFAULT_ZONE,
     save_env_setting,
     ENV_PATH,
     REGION_LEFT_PCT,
@@ -143,8 +144,10 @@ def main():
             return
         final_zone = tracker.get_zone()
         tracker.stop()
+        tracker.set_zone(DEFAULT_ZONE)
         log_window.clear_totals()
         elapsed_seconds = log_window.stop_timer()
+        log_window.reset_timer()
         if current_session_id is not None:
             local_store.end_session(current_session_id, elapsed_seconds)
             current_session_id = None
@@ -175,15 +178,18 @@ def main():
 
         def _reload_region():
             proc.wait()
+            if proc.returncode != 0:
+                log_window._append_system("Calibration cancelled.")
+                return
             load_dotenv(ENV_PATH, override=True)
             tracker.set_region(
-                float(os.getenv("REGION_LEFT_PCT", "0.65")),
-                float(os.getenv("REGION_TOP_PCT", "0.72")),
-                float(os.getenv("REGION_RIGHT_PCT", "1.0")),
-                float(os.getenv("REGION_BOTTOM_PCT", "0.88")),
+                float(os.getenv("REGION_LEFT_PCT", "0")),
+                float(os.getenv("REGION_TOP_PCT", "0")),
+                float(os.getenv("REGION_RIGHT_PCT", "0")),
+                float(os.getenv("REGION_BOTTOM_PCT", "0")),
             )
             log_window._needs_calibration = False
-            log_window._append_system("Calibration saved — capture region updated.")
+            log_window._append_system("Calibration saved.")
 
         threading.Thread(target=_reload_region, daemon=True).start()
         return "Calibration launched."

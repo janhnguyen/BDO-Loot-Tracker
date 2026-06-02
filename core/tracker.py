@@ -22,13 +22,12 @@ _WINDOW_MIN = 15
 _WINDOW_MAX = 30
 
 # Scroll detection: maximum per-pixel mean diff (0-255) to accept a shift match.
-_SCROLL_MATCH_THRESHOLD = 25
+_SCROLL_MATCH_THRESHOLD = 40
 # Maximum scroll to check in pixels (full-res). Covers many simultaneous drops.
-_MAX_SCROLL_PX = 300
+_MAX_SCROLL_PX = 500
 # How many items must disappear from the visible frame before we treat it as
 # the region being covered rather than ordinary OCR noise (1–2 misses).
 _COVERAGE_DROP_THRESHOLD = 2
-
 
 class Tracker:
     def __init__(self, on_event, on_ocr, on_ocr_frame=None):

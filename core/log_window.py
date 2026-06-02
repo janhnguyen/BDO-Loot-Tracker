@@ -270,6 +270,11 @@ class LogWindow:
             self._timer_started_at = None
             return self._timer_elapsed_seconds
 
+    def reset_timer(self):
+        with self._lock:
+            self._timer_started_at = None
+            self._timer_elapsed_seconds = 0.0
+
     @staticmethod
     def _format_duration(seconds: float) -> str:
         total_seconds = int(max(0.0, seconds))
@@ -366,6 +371,8 @@ class LogWindow:
             self.resume_cb()
         elif action == "stop" and self.stop_cb:
             self.stop_cb()
+            with self._lock:
+                self._logs = []
         elif action == "calibrate" and self.calibrate_cb:
             message = self.calibrate_cb()
             if message:

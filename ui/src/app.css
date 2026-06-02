@@ -1215,6 +1215,44 @@ pre::-webkit-scrollbar-corner,
   min-width: 0;
 }
 
+.chart-legend-item-toggle {
+  cursor: pointer;
+  transition: opacity 0.15s;
+  user-select: none;
+}
+
+.chart-legend-item-toggle:hover {
+  opacity: 0.75;
+}
+
+.chart-legend-item-hidden {
+  opacity: 0.3;
+}
+
+.chart-tooltip {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  background: #1a1a22;
+  border: 1px solid #3a3a50;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #e0d8c0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.chart-tooltip-name {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chart-tooltip-value {
+  color: #d4a017;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  margin-top: 2px;
+}
+
 .chart-legend-dot {
   width: 8px;
   height: 8px;
