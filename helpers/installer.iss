@@ -13,7 +13,7 @@
 #define MyAppName      "BDO Loot Tracker"
 #define MyAppPublisher "janhnguyen"
 #define MyAppExeName   "BDO-Loot-Tracker.exe"
-#define MyAppSourceDir "dist\BDO-Loot-Tracker"
+#define MyAppSourceDir "..\dist\BDO-Loot-Tracker"
 
 [Setup]
 ; Changing AppId will break upgrade detection — keep it stable forever.

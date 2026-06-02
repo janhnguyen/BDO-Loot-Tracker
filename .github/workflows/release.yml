@@ -60,5 +60,5 @@ jobs:
         with:
           name: "v${{ env.VERSION }}"
           body_path: helpers/CHANGELOG.md
-          files: installer_output/BDO-Loot-Tracker-Setup-${{ env.VERSION }}.exe
+          files: helpers/installer_output/BDO-Loot-Tracker-Setup-${{ env.VERSION }}.exe
           draft: true
