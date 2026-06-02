@@ -15,7 +15,8 @@ Questions, comments, or concerns? Get in contact with me through my [discord](ht
 
 - **Live Loot Log** - timestamped items are logged and tracked
 - **Local Database** - loot events are saved to SQLite by session with start/end times, duration, and silver per hour
-- **Session Analytics** - charts showing silver earned over time and items obtained over time, plus a full items breakdown sorted by silver value
+- **Session Analytics** - charts showing silver/items obtained over time, plus a full items breakdown
+![Screenshot](images/session_analytics.png)
 - **Zone Detection** - Grind spots are automatically detected
 - **Open Source** - Customize the tracker however you'd like
 
