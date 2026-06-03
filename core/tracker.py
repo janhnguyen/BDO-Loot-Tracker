@@ -23,8 +23,6 @@ _WINDOW_MAX = 30
 
 # Scroll detection: maximum per-pixel mean diff (0-255) to accept a shift match.
 _SCROLL_MATCH_THRESHOLD = 40
-# Maximum scroll to check in pixels (full-res). Covers many simultaneous drops.
-_MAX_SCROLL_PX = 500
 # How many items must disappear from the visible frame before we treat it as
 # the region being covered rather than ordinary OCR noise (1–2 misses).
 _COVERAGE_DROP_THRESHOLD = 2
@@ -120,9 +118,10 @@ class Tracker:
         if its overlap score is both below the noise threshold AND meaningfully
         better than the s=0 baseline (i.e. the shift actually explains the diff).
         """
+        # downscale frame to 1/8th
         w, h = prev.size
         tw, th = max(4, w // 8), max(4, h // 8)
-        max_s = min(th // 2, max(1, _MAX_SCROLL_PX // 8))
+        max_s = max(1, th - 1)
 
         a = list(prev.resize((tw, th), Image.BOX).getdata())
         b = list(curr.resize((tw, th), Image.BOX).getdata())
@@ -134,6 +133,7 @@ class Tracker:
             return 0
 
         best_s, best_score = 0, float('inf')
+        # shift frame up and compare
         for s in range(1, max_s + 1):
             overlap = th - s
             n = overlap * tw
