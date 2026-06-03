@@ -5,7 +5,7 @@ import mss
 import pytesseract
 from PIL import Image, ImageFilter
 
-from .parser import parse_loot, resolve_batch_zone_overrides
+from .parser import parse_loot, parse_loot_with_raw, resolve_batch_zone_overrides
 from .uploader import LootEvent
 from .config import (
     POLL_INTERVAL,
@@ -28,7 +28,7 @@ _SCROLL_MATCH_THRESHOLD = 40
 _COVERAGE_DROP_THRESHOLD = 2
 
 class Tracker:
-    def __init__(self, on_event, on_ocr, on_ocr_frame=None):
+    def __init__(self, on_event, on_ocr, on_ocr_frame=None, on_strip_result=None):
         self._running = False
         self._thread = None
         self._zone = "Unknown"
@@ -36,6 +36,7 @@ class Tracker:
         self._on_event = on_event
         self._on_ocr = on_ocr
         self._on_ocr_frame = on_ocr_frame
+        self._on_strip_result = on_strip_result
 
         self._tracking_window_size: int = max(_WINDOW_MIN, min(_WINDOW_MAX, TRACKING_WINDOW_SIZE))
         self._suppress_events_until = 0.0
@@ -192,6 +193,11 @@ class Tracker:
         pw, ph = processed_img.size
         new_strip = processed_img.crop((0, ph - shift_px, pw, ph))
         text = pytesseract.image_to_string(new_strip, config="--psm 6")
+
+        pairs = parse_loot_with_raw(text)
+        if pairs and self._on_strip_result:
+            self._on_strip_result(pairs)
+
         drops = parse_loot(text)
         if drops:
             self._current_batch_overrides = resolve_batch_zone_overrides(

@@ -28,7 +28,7 @@ from core.config import (
     REGION_RIGHT_PCT,
     REGION_BOTTOM_PCT,
 )
-from core.parser import get_item_zone, is_dehkia_two_indicator, get_dehkia_two_upgrade, parse_loot_with_raw
+from core.parser import get_item_zone, is_dehkia_two_indicator, get_dehkia_two_upgrade
 from core.arsha_market_source import fetch_arsha_hotlist
 from core import updater as _updater
 
@@ -105,14 +105,21 @@ def main():
 
     def handle_ocr(text):
         log_window.add_raw_ocr(text)
-        if _session_logger is not None:
-            _session_logger.add_ocr_lines(parse_loot_with_raw(text))
 
     def handle_ocr_frame(raw_img, processed_img):
         log_window.add_ocr_frame(raw_img, processed_img)
 
+    def handle_strip_result(pairs):
+        if _session_logger is not None:
+            _session_logger.add_ocr_lines(pairs)
+        if log_window is not None:
+            for raw, cleaned in pairs:
+                if cleaned is None:
+                    log_window._append_system(f"[MISS] {raw}")
+
     # Create the tracker
-    tracker = Tracker(handle_event, handle_ocr, on_ocr_frame=handle_ocr_frame)
+    tracker = Tracker(handle_event, handle_ocr, on_ocr_frame=handle_ocr_frame,
+                      on_strip_result=handle_strip_result)
 
     def start_session():
         nonlocal current_session_id, _session_logger
