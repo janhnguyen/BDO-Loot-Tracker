@@ -1,6 +1,7 @@
 ## v0.0.0 - ???
-- Adjust session logger
+- Bugfixing item parser
 - Fixed Arsha.io market price fetching
+- Session analytics improvements
 
 ## v0.6.0 - June 2nd, 2026
 - Improved new user experience

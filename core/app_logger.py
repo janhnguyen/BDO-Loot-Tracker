@@ -93,7 +93,7 @@ class SessionLogger:
         lines.append("")
 
         for raw, cleaned in self._lines:
-            cleaned_str = cleaned if cleaned is not None else "(no match)"
+            cleaned_str = cleaned if cleaned else "(no match)"
             lines.append(f"{raw}  ->  {cleaned_str}")
 
         (_log_dir / filename).write_text("\n".join(lines) + "\n", encoding="utf-8")

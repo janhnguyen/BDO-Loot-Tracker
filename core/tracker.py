@@ -195,12 +195,12 @@ class Tracker:
         pw, ph = processed_img.size
         new_strip = processed_img.crop((0, ph - shift_px, pw, ph))
         text = pytesseract.image_to_string(new_strip, config="--psm 6")
-
+        print(text)
         pairs = parse_loot_with_raw(text)
         if pairs and self._on_strip_result:
             self._on_strip_result(pairs)
-
         drops = parse_loot(text)
+        print(drops)
         if drops:
             self._current_batch_overrides = resolve_batch_zone_overrides(
                 [d[0] for d in drops]

@@ -114,7 +114,7 @@ def main():
             _session_logger.add_ocr_lines(pairs)
         if log_window is not None:
             for raw, cleaned in pairs:
-                if cleaned is None:
+                if not cleaned:
                     log_window._append_system(f"[MISS] {raw}")
 
     # Create the tracker
@@ -314,10 +314,10 @@ def main():
         show_log=log_window.show,
     )
 
-    # Run the UI loop — blocks until the window is closed
+    # Run the UI loop
     log_window.run()
 
-    # Window was closed — remove the tray icon too
+    # remove the tray icon too
     tray_icon.stop()
 
 if __name__ == "__main__":

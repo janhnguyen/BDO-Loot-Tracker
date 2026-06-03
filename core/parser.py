@@ -155,17 +155,27 @@ def _norm_digits(s: str) -> str:
              .replace('I', '1').replace(']', '1').replace('[', '1')
              .replace('O', '0').replace('o', '0'))
 
+def _clean_line(s: str) -> str:
+    s = s.replace('l.', '].')
+    s = s.replace('l x', '] x')
+    s = re.sub(r'^[^\[]*\[', '[', s)
+    s = re.sub(r'\bevent\b', '', s.replace('[', '').replace(']', ''), flags=re.IGNORECASE).strip()
+    s = s.replace('‘', "'").replace('’', "'")
+    s = s.replace('`', "'")
+    s = s.replace(',', '')
+    s = s.replace('THAN', 'HAN')
+    return s
+
 
 def _parse_single_line(line: str) -> tuple[str, int] | None:
     """Return (item_name, qty) if line contains a recognised item, else None."""
-    line_stripped = re.sub(r'\bevent\b', '', line.replace("[", "").replace("]", ""), flags=re.IGNORECASE).strip()
-    line_stripped = line_stripped.replace('’', "'").replace('‘', "'").replace('`', "'").replace(',',"").replace('THAN', 'HAN')
-    line_lc = line_stripped.lower()
+    line = _clean_line(line)
+    line_lc = line.lower()
     for name in ITEM_NAMES:
         idx = line_lc.find(name.lower())
         if idx == -1:
             continue
-        after = line_stripped[idx + len(name):]
+        after = line[idx + len(name):]
         m = re.search(r'[xX×]\s*([0-9|!lI\[\]Oo]{1,6})', after)
         if m:
             try:
@@ -178,7 +188,6 @@ def _parse_single_line(line: str) -> tuple[str, int] | None:
             return (name, 1)
     return None
 
-
 def parse_loot(text: str):
     # Expected line format: You have obtained ● [Item Name] xN
     results = []
@@ -186,27 +195,25 @@ def parse_loot(text: str):
         line = line.strip()
         if not line:
             continue
-        if '[' not in line or ']' not in line:
+        if '[' not in line:
             continue
         parsed = _parse_single_line(line)
         if parsed:
             results.append(parsed)
     return results
 
-
 def parse_loot_with_raw(text: str) -> list[tuple[str, str | None]]:
     """Return (raw_line, cleaned_line) pairs for every bracket-containing line in text.
-
-    cleaned_line is '[Item Name] xQTY' when matched, None when no item was recognised.
+    cleaned_line is '[Item Name] xQTY' when matched, '' when no item was recognised.
     """
     pairs: list[tuple[str, str | None]] = []
-    for line in text.splitlines():
-        line = line.strip()
-        if not line:
+    for raw in text.splitlines():
+        raw = raw.strip()
+        if not raw:
             continue
-        if '[' not in line or ']' not in line:
+        if '[' not in raw:
             continue
-        parsed = _parse_single_line(line)
-        cleaned = f"[{parsed[0]}] x{parsed[1]}" if parsed else None
-        pairs.append((line, cleaned))
+        parsed = _parse_single_line(raw)
+        cleaned = f"[{parsed[0]}] x{parsed[1]}" if parsed else ''
+        pairs.append((raw, cleaned))
     return pairs
