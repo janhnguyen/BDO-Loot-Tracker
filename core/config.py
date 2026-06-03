@@ -17,7 +17,7 @@ CHARACTER_NAME = os.getenv("CHARACTER_NAME", "MyCharacter")
 DEFAULT_ZONE   = os.getenv("DEFAULT_ZONE", "Unknown")
 
 # 1/POLL_INTERVAL = screenshots per second
-POLL_INTERVAL = 0.25
+POLL_INTERVAL = 0.50
 SESSION_RESET_DELAY_SECONDS = float(os.getenv("SESSION_RESET_DELAY_SECONDS", "1.5"))
 TRACKING_WINDOW_SIZE = int(os.getenv("TRACKING_WINDOW_SIZE", "20"))
 

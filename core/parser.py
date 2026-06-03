@@ -94,6 +94,10 @@ def load_items():
 
 ITEM_NAMES, ITEM_VALUES, ITEM_ZONES, ITEM_DEHKIA_TWO_TF, DEHKIA_ZONE_UPGRADE, ITEM_VALUES_BY_ZONE = load_items()
 
+def reload_items() -> None:
+    global ITEM_NAMES, ITEM_VALUES, ITEM_ZONES, ITEM_DEHKIA_TWO_TF, DEHKIA_ZONE_UPGRADE, ITEM_VALUES_BY_ZONE
+    ITEM_NAMES, ITEM_VALUES, ITEM_ZONES, ITEM_DEHKIA_TWO_TF, DEHKIA_ZONE_UPGRADE, ITEM_VALUES_BY_ZONE = load_items()
+
 def get_item_value(item_name: str) -> float:
     return ITEM_VALUES.get(item_name, 0.0)
 

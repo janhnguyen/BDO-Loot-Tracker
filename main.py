@@ -28,8 +28,8 @@ from core.config import (
     REGION_RIGHT_PCT,
     REGION_BOTTOM_PCT,
 )
-from core.parser import get_item_zone, is_dehkia_two_indicator, get_dehkia_two_upgrade
-from core.arsha_market_source import fetch_arsha_hotlist
+from core.parser import get_item_zone, is_dehkia_two_indicator, get_dehkia_two_upgrade, reload_items
+from core.arsha_market_source import fetch_arsha_full_catalog
 from core import updater as _updater
 
 def main():
@@ -234,7 +234,7 @@ def main():
 
     _ARSHA_CSV = Path(LOCAL_DB_PATH).resolve().parent.parent / "items" / "items.arsha.csv"
 
-    def _write_arsha_csv(prices: dict):
+    def _write_arsha_csv(prices: dict) -> int:
         import csv
         existing: dict[str, str] = {}
         if _ARSHA_CSV.exists():
@@ -242,25 +242,32 @@ def main():
                 for row in csv.reader(f):
                     if len(row) >= 2 and row[0].strip().lower() != "name":
                         existing[row[0].strip()] = row[1].strip()
+        changed = 0
+        _ARSHA_CSV.parent.mkdir(parents=True, exist_ok=True)
         for name, value in prices.items():
             if name and value > 0:
-                existing[name] = str(int(value))
+                new_val = str(int(value))
+                if existing.get(name) != new_val:
+                    existing[name] = new_val
+                    changed += 1
         with _ARSHA_CSV.open("w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(["name", "value"])
             for name in sorted(existing.keys()):
                 writer.writerow([name, existing[name]])
+        return changed
 
     def update_market_prices():
         def _run():
             log_window._append_system("Fetching market prices from Arsha…")
             try:
-                prices = fetch_arsha_hotlist()
+                prices = fetch_arsha_full_catalog()
                 if not prices:
                     log_window._append_system("Market fetch returned no data.")
                     return
-                _write_arsha_csv(prices)
-                log_window._append_system(f"Market prices updated — {len(prices)} items.")
+                changed = _write_arsha_csv(prices)
+                reload_items()
+                log_window._append_system(f"Market prices updated - {changed} items changed.")
             except Exception as e:
                 log_window._append_system(f"Market fetch failed: {e}")
             finally:
