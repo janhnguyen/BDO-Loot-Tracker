@@ -1297,6 +1297,43 @@ pre::-webkit-scrollbar-corner,
 
 /* Items breakdown */
 
+.detail-items-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24px;
+  margin-bottom: 10px;
+}
+
+.detail-sort-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.detail-sort-btn {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid #2e2e3a;
+  background: transparent;
+  color: #5a5468;
+  cursor: pointer;
+  transition: color 0.1s, border-color 0.1s;
+}
+
+.detail-sort-btn:hover {
+  color: #a09898;
+  border-color: #4a4460;
+}
+
+.detail-sort-active {
+  color: #d4a017;
+  border-color: #6a5520;
+}
+
 .detail-items {
   display: flex;
   flex-direction: column;

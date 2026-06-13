@@ -59,6 +59,8 @@ def fetch_arsha_full_catalog(
 
                 loaded_any = True
                 empty_subcategories = 0
+                #for name in batch:
+                #    print(f"[arsha] {name}")
                 items.update(batch)
         if loaded_any and items:
             return items
@@ -92,7 +94,7 @@ def _parse_payload(raw_text: str) -> dict[str, float]:
         if not isinstance(row, dict):
             continue
         name = _first_str(row, "name", "itemName", "MainName", "item_name")
-        if not name:
+        if not name or "[" in name:
             continue
         price = _first_float(row, "price", "basePrice", "currentMinPrice", "value")
         items[name] = price

@@ -94,6 +94,22 @@ def load_items():
 
 ITEM_NAMES, ITEM_VALUES, ITEM_ZONES, ITEM_DEHKIA_TWO_TF, DEHKIA_ZONE_UPGRADE, ITEM_VALUES_BY_ZONE = load_items()
 
+# Lowercase index for fuzzy name resolution. Rebuilt whenever ITEM_NAMES changes.
+_ITEM_NAMES_LC: list[str] = []
+_LC_TO_CANON: dict[str, str] = {}
+
+def _rebuild_name_index() -> None:
+    global _ITEM_NAMES_LC, _LC_TO_CANON
+    _LC_TO_CANON = {name.lower(): name for name in ITEM_NAMES}
+    _ITEM_NAMES_LC = list(_LC_TO_CANON.keys())
+
+_rebuild_name_index()
+
+def reload_items() -> None:
+    global ITEM_NAMES, ITEM_VALUES, ITEM_ZONES, ITEM_DEHKIA_TWO_TF, DEHKIA_ZONE_UPGRADE, ITEM_VALUES_BY_ZONE
+    ITEM_NAMES, ITEM_VALUES, ITEM_ZONES, ITEM_DEHKIA_TWO_TF, DEHKIA_ZONE_UPGRADE, ITEM_VALUES_BY_ZONE = load_items()
+    _rebuild_name_index()
+
 def get_item_value(item_name: str) -> float:
     return ITEM_VALUES.get(item_name, 0.0)
 
@@ -151,58 +167,93 @@ def _norm_digits(s: str) -> str:
              .replace('I', '1').replace(']', '1').replace('[', '1')
              .replace('O', '0').replace('o', '0'))
 
+_LEADING_OCR_FIXES = (
+    (re.compile(r'^THAN\b'), 'HAN'),
+)
+
+def _fix_leading_ocr(s: str) -> str:
+    for pattern, repl in _LEADING_OCR_FIXES:
+        s = pattern.sub(repl, s, count=1)
+    return s
+
+def _clean_line(s: str) -> str:
+    s = s.replace('l.', '].')
+    s = s.replace('l x', '] x')
+    s = re.sub(r'^[^\[]*\[', '[', s)
+    s = re.sub(r'\bevent\b', '', s.replace('[', '').replace(']', ''), flags=re.IGNORECASE).strip()
+    s = s.replace('‘', "'").replace('’', "'")
+    s = s.replace('`', "'")
+    s = s.replace(',', '')
+    s = _fix_leading_ocr(s)
+    return s
+
+_QTY_RE = re.compile(r'[xX×]\s*([0-9|!lI\[\]Oo]{1,6})')
+
+def extract_quantity(after: str) -> tuple[bool, int | None]:
+    """
+    Parse a trailing 'xN' quantity from the text following an item name.
+
+    Returns (token_present, qty):
+      (False, None)  no x-token at all -> caller should treat as qty 1.
+      (True, qty)    a valid positive quantity was parsed.
+      (True, None)   an x-token was present but unparseable (reject this match).
+    Digit-confusion characters (| ! l I [ ] O o) are normalised to digits.
+    """
+    m = _QTY_RE.search(after)
+    if not m:
+        return (False, None)
+    try:
+        qty = int(_norm_digits(m.group(1)))
+    except ValueError:
+        return (True, None)
+    return (True, qty if qty > 0 else None)
+
+
+def fuzzy_resolve_name(text: str, threshold: float = 0.82) -> tuple[str, float] | None:
+    """
+    Resolve an OCR'd name fragment to its canonical item name via fuzzy match.
+
+    Returns (canonical_name, similarity) for the best match at or above
+    threshold, else None. Intended as a fallback when exact substring
+    matching fails (e.g. "Ancient Solder Fragment" -> "Ancient Soldier Fragment").
+    """
+    from difflib import SequenceMatcher
+
+    candidate = text.strip().lower()
+    if not candidate:
+        return None
+
+    best_name: str | None = None
+    best_ratio = 0.0
+    matcher = SequenceMatcher()
+    matcher.set_seq2(candidate)
+    for name_lc in _ITEM_NAMES_LC:
+        matcher.set_seq1(name_lc)
+        # quick_ratio is a cheap upper bound; skip hopeless candidates early.
+        if matcher.quick_ratio() < threshold:
+            continue
+        ratio = matcher.ratio()
+        if ratio > best_ratio:
+            best_ratio = ratio
+            best_name = _LC_TO_CANON[name_lc]
+    if best_name is not None and best_ratio >= threshold:
+        return (best_name, best_ratio)
+    return None
+
 
 def _parse_single_line(line: str) -> tuple[str, int] | None:
     """Return (item_name, qty) if line contains a recognised item, else None."""
-    line_stripped = re.sub(r'\bevent\b', '', line.replace("[", "").replace("]", ""), flags=re.IGNORECASE).strip()
-    line_stripped = line_stripped.replace('’', "'").replace('‘', "'").replace('`', "'").replace(',',"").replace('THAN', 'HAN')
-    line_lc = line_stripped.lower()
+    line = _clean_line(line)
+    line_lc = line.lower()
     for name in ITEM_NAMES:
         idx = line_lc.find(name.lower())
         if idx == -1:
             continue
-        after = line_stripped[idx + len(name):]
-        m = re.search(r'[xX×]\s*([0-9|!lI\[\]Oo]{1,6})', after)
-        if m:
-            try:
-                qty = int(_norm_digits(m.group(1)))
-                if qty > 0:
-                    return (name, qty)
-            except Exception:
-                pass
-        else:
+        present, qty = extract_quantity(line[idx + len(name):])
+        if not present:
             return (name, 1)
+        if qty is not None:
+            return (name, qty)
+        # x-token present but unparseable -> keep scanning other candidates.
     return None
 
-
-def parse_loot(text: str):
-    # Expected line format: You have obtained ● [Item Name] xN
-    results = []
-    for line in text.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        if '[' not in line or ']' not in line:
-            continue
-        parsed = _parse_single_line(line)
-        if parsed:
-            results.append(parsed)
-    return results
-
-
-def parse_loot_with_raw(text: str) -> list[tuple[str, str | None]]:
-    """Return (raw_line, cleaned_line) pairs for every bracket-containing line in text.
-
-    cleaned_line is '[Item Name] xQTY' when matched, None when no item was recognised.
-    """
-    pairs: list[tuple[str, str | None]] = []
-    for line in text.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        if '[' not in line or ']' not in line:
-            continue
-        parsed = _parse_single_line(line)
-        cleaned = f"[{parsed[0]}] x{parsed[1]}" if parsed else None
-        pairs.append((line, cleaned))
-    return pairs

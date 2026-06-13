@@ -8,13 +8,14 @@ from core.log_window import LogWindow
 from core.tracker import Tracker
 from core.tray import run_tray
 from core.local_store import LocalStore
-from core.app_logger import SessionLogger, setup_error_logger
+from core.app_logger import SessionLogger, setup_error_logger, log_missed
 from dotenv import load_dotenv
 from core.config import (
     LOCAL_DB_PATH,
     SHOW_OCR_LOG,
     SHOW_OCR_PANE,
     SHOW_LIVE_LOG,
+    SHOW_LIVE_METRICS,
     ITEMS_FONT_SIZE,
     KEYBIND_START,
     KEYBIND_PAUSE,
@@ -28,8 +29,8 @@ from core.config import (
     REGION_RIGHT_PCT,
     REGION_BOTTOM_PCT,
 )
-from core.parser import get_item_zone, is_dehkia_two_indicator, get_dehkia_two_upgrade, parse_loot_with_raw
-from core.arsha_market_source import fetch_arsha_hotlist
+from core.parser import get_item_zone, is_dehkia_two_indicator, get_dehkia_two_upgrade, reload_items
+from core.arsha_market_source import fetch_arsha_full_catalog
 from core import updater as _updater
 
 def main():
@@ -105,14 +106,38 @@ def main():
 
     def handle_ocr(text):
         log_window.add_raw_ocr(text)
-        if _session_logger is not None:
-            _session_logger.add_ocr_lines(parse_loot_with_raw(text))
 
     def handle_ocr_frame(raw_img, processed_img):
         log_window.add_ocr_frame(raw_img, processed_img)
 
+    def handle_strip_result(pairs):
+        # Session log keeps the full raw -> cleaned record for every OCR line.
+        if _session_logger is not None:
+            _session_logger.add_ocr_lines(pairs)
+
+    def handle_missed(text):
+        # Any line that didn't become a
+        # confirmed event is written to the rolling Missed_*.log (error log) and
+        # shown in the live log, exactly as OCR read it.
+        log_missed(text)
+        if log_window is not None:
+            log_window._append_system(text)
+
+    def handle_metrics(summary):
+        if log_window is not None:
+            log_window._append_system(summary)
+
+    def handle_diagnostics(diag):
+        # Surface only noteworthy frames (zero overlap / text-vs-scroll mismatch).
+        if log_window is not None and diag.is_noteworthy():
+            log_window._append_system(diag.summary())
+
     # Create the tracker
-    tracker = Tracker(handle_event, handle_ocr, on_ocr_frame=handle_ocr_frame)
+    tracker = Tracker(handle_event, handle_ocr, on_ocr_frame=handle_ocr_frame,
+                      on_strip_result=handle_strip_result,
+                      on_diagnostics=handle_diagnostics,
+                      on_missed=handle_missed,
+                      on_metrics=handle_metrics)
 
     def start_session():
         nonlocal current_session_id, _session_logger
@@ -227,7 +252,7 @@ def main():
 
     _ARSHA_CSV = Path(LOCAL_DB_PATH).resolve().parent.parent / "items" / "items.arsha.csv"
 
-    def _write_arsha_csv(prices: dict):
+    def _write_arsha_csv(prices: dict) -> int:
         import csv
         existing: dict[str, str] = {}
         if _ARSHA_CSV.exists():
@@ -235,25 +260,32 @@ def main():
                 for row in csv.reader(f):
                     if len(row) >= 2 and row[0].strip().lower() != "name":
                         existing[row[0].strip()] = row[1].strip()
+        changed = 0
+        _ARSHA_CSV.parent.mkdir(parents=True, exist_ok=True)
         for name, value in prices.items():
             if name and value > 0:
-                existing[name] = str(int(value))
+                new_val = str(int(value))
+                if existing.get(name) != new_val:
+                    existing[name] = new_val
+                    changed += 1
         with _ARSHA_CSV.open("w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(["name", "value"])
             for name in sorted(existing.keys()):
                 writer.writerow([name, existing[name]])
+        return changed
 
     def update_market_prices():
         def _run():
             log_window._append_system("Fetching market prices from Arsha…")
             try:
-                prices = fetch_arsha_hotlist()
+                prices = fetch_arsha_full_catalog()
                 if not prices:
                     log_window._append_system("Market fetch returned no data.")
                     return
-                _write_arsha_csv(prices)
-                log_window._append_system(f"Market prices updated — {len(prices)} items.")
+                changed = _write_arsha_csv(prices)
+                reload_items()
+                log_window._append_system(f"Market prices updated - {changed} items changed.")
             except Exception as e:
                 log_window._append_system(f"Market fetch failed: {e}")
             finally:
@@ -286,6 +318,7 @@ def main():
         open_log_dir_cb=open_log_dir,
         wipe_database_cb=wipe_database,
         show_live_log_default=SHOW_LIVE_LOG,
+        show_live_metrics_default=SHOW_LIVE_METRICS,
         keybind_start_default=KEYBIND_START,
         keybind_pause_default=KEYBIND_PAUSE,
         keybind_stop_default=KEYBIND_STOP,
@@ -300,10 +333,10 @@ def main():
         show_log=log_window.show,
     )
 
-    # Run the UI loop — blocks until the window is closed
+    # Run the UI loop
     log_window.run()
 
-    # Window was closed — remove the tray icon too
+    # remove the tray icon too
     tray_icon.stop()
 
 if __name__ == "__main__":

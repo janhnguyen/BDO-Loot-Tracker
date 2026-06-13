@@ -17,9 +17,31 @@ CHARACTER_NAME = os.getenv("CHARACTER_NAME", "MyCharacter")
 DEFAULT_ZONE   = os.getenv("DEFAULT_ZONE", "Unknown")
 
 # 1/POLL_INTERVAL = screenshots per second
-POLL_INTERVAL = 0.25
+POLL_INTERVAL = 0.1
+OCR_UPSCALE = max(1.0, min(4.0, float(os.getenv("OCR_UPSCALE", "2.0"))))
 SESSION_RESET_DELAY_SECONDS = float(os.getenv("SESSION_RESET_DELAY_SECONDS", "1.5"))
 TRACKING_WINDOW_SIZE = int(os.getenv("TRACKING_WINDOW_SIZE", "20"))
+
+# Alignment / staging pipeline tuning
+# Frames a loot line must be observed before it is committed (multi-frame voting).
+# 3 gives a 2-of-3 majority that overrides any single-frame OCR digit error while
+# still confirming within ~0.3s at the default poll rate.
+LOOT_MIN_SIGHTINGS = max(1, int(os.getenv("LOOT_MIN_SIGHTINGS", "3")))
+# Fuzzy name-resolution acceptance (difflib ratio) for canonicalising OCR names.
+NAME_FUZZY_THRESHOLD = float(os.getenv("NAME_FUZZY_THRESHOLD", "0.82"))
+# Stability gate: skip OCR until the region holds still. diff is mean abs pixel
+# change (0-255) on a downscaled grayscale frame.
+ENABLE_STABILITY_GATE = os.getenv("ENABLE_STABILITY_GATE", "true").strip().lower() in {"1", "true", "yes", "on"}
+STABILITY_DIFF_THRESHOLD = float(os.getenv("STABILITY_DIFF_THRESHOLD", "3.0"))
+STABILITY_MIN_FRAMES = max(1, int(os.getenv("STABILITY_MIN_FRAMES", "2")))
+# Pixel scroll detection: advisory hint that disambiguates many-identical-lines.
+ENABLE_SCROLL_HINT = os.getenv("ENABLE_SCROLL_HINT", "true").strip().lower() in {"1", "true", "yes", "on"}
+# Anti-duplicate guard: max new loot lines plausibly appearing between two frames.
+# A larger "new" count (unconfirmed by pixel scroll) is treated as a misalignment
+# and skipped, preventing the wall-of-identical-lines re-emission bug.
+MAX_PLAUSIBLE_NEW = max(1, int(os.getenv("MAX_PLAUSIBLE_NEW", "10")))
+# How often the tracker logs a [METRICS] pipeline summary (seconds).
+METRICS_LOG_INTERVAL_SECONDS = float(os.getenv("METRICS_LOG_INTERVAL_SECONDS", "30"))
 
 REGION_LEFT_PCT   = float(os.getenv("REGION_LEFT_PCT",   "0.65"))
 REGION_TOP_PCT    = float(os.getenv("REGION_TOP_PCT",    "0.72"))
@@ -34,6 +56,7 @@ def _get_bool_env(key: str, default: bool) -> bool:
 SHOW_OCR_LOG = _get_bool_env("SHOW_OCR_LOG", False)
 SHOW_OCR_PANE = _get_bool_env("SHOW_OCR_PANE", False)
 SHOW_LIVE_LOG = _get_bool_env("SHOW_LIVE_LOG", False)
+SHOW_LIVE_METRICS = _get_bool_env("SHOW_LIVE_METRICS", True)
 ITEMS_FONT_SIZE = max(12, min(20, int(os.getenv("ITEMS_FONT_SIZE", "12"))))
 
 KEYBIND_START = os.getenv("KEYBIND_START", "Control+Shift+A")

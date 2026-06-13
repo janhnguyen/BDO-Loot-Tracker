@@ -15,7 +15,8 @@ Questions, comments, or concerns? Get in contact with me through my [discord](ht
 
 - **Live Loot Log** - timestamped items are logged and tracked
 - **Local Database** - loot events are saved to SQLite by session with start/end times, duration, and silver per hour
-- **Session Analytics** - charts showing silver earned over time and items obtained over time, plus a full items breakdown sorted by silver value
+- **Session Analytics** - charts showing silver/items obtained over time, plus a full items breakdown
+![Screenshot](images/session_analytics.png)
 - **Zone Detection** - Grind spots are automatically detected
 - **Open Source** - Customize the tracker however you'd like
 
@@ -58,6 +59,7 @@ If you need help getting started, feel free to message me on Discord.
 | `pytesseract` + Tesseract Binary | OCR engine |
 | `mss` | Screen capturing |
 | `Pillow` | Image preprocessing |
+| `NumPy` | Vectorized image preprocessing, scroll & stability detection |
 | `PySide6 (Qt)` | Desktop application window |
 | `pystray` | System tray integration |
 | `python-dotenv` | `.env` configuration loading |
@@ -73,16 +75,22 @@ If you need help getting started, feel free to message me on Discord.
 
 ## Data Flow Pipeline
 ```mermaid
-flowchart TD 
-A["Monitor Pixels"] 
-A -->|"mss.grab()<br/>BGR to RGB<br/>2x Upsample"| B["Raw Frame"] 
-B -->|"Brightness Threshold<br/>MinFilter(3)"| C["Binary Image"] 
-C -->|"OCR Processing<br/>PSM 6"| D["Raw OCR Text"] 
-D -->|"parse_loot()<br/>Bracket Matching<br/>Quantity Normalization<br/>Zone Context"| E["item_name, qty, zone"] 
-E -->|"handle_event()<br/>Dehkia Upgrade Logic<br/>Batch Overrides"| F["LootEvent Dataclass"] 
-F -->|"LocalStore.add_event()"| G["SQLite<br/>Summary + Timeline"] 
-F -->|"LogWindow.add_event()"| H["In-memory Log"] 
-H -->|"/api/state"| I["Svelte UI"]
+flowchart TD
+A["Monitor Pixels"]
+A -->|"mss.grab()<br/>BGR to RGB<br/>Configurable upscale (OCR_UPSCALE)"| B["Raw Frame"]
+B -->|"Downscaled grayscale"| S{"Stable & changed?<br/>stability gate + idle skip"}
+S -->|"no"| A
+S -->|"yes"| C["Binary Image<br/>NumPy brightness threshold + MinFilter(3)"]
+C -->|"Tesseract PSM 6"| D["Raw OCR Text"]
+D -->|"normalize_frame()<br/>clean + fuzzy canonicalize + quantity parse"| E["Normalized Lines"]
+E -->|"align()<br/>fuzzy suffix/prefix overlap<br/>+ pixel-scroll validation"| F["New Lines + Overlap"]
+F -->|"LootStager.observe()<br/>pending buffer + multi-frame vote<br/>(committed once)"| G["CommittedEvent"]
+G -->|"handle_event()<br/>Dehkia upgrade + batch overrides"| H["LootEvent"]
+H -->|"LocalStore.add_event()"| I["SQLite<br/>Summary + Timeline"]
+H -->|"LogWindow.add_event()"| J["In-memory Log"]
+J -->|"/api/state"| K["Svelte UI"]
+F -.->|"unresolved -> MISSED log + Live Log"| L["Observability"]
+F -.->|"per-frame metrics / diagnostics"| L
 ```
 ## Database
 ### Schema

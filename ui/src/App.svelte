@@ -8,6 +8,7 @@
     logs: [],
     totals: [],
     show_ocr: false,
+    show_live_metrics: true,
     sessions: ['No sessions'],
     selected_session: 'No sessions',
   };
@@ -26,15 +27,23 @@
   // Chart constants (SVG inner area)
   const CW = 460, CH = 150;
 
-  const CHART_COLORS = [
-    '#d4a017', '#50c878', '#4a9eff', '#e05050', '#c870e0',
-    '#50c8c8', '#e09050', '#a0c850', '#e05090', '#8090e0',
-  ];
+  function chartColor(idx) {
+    const hue = (idx * 137.508) % 360;
+    return `hsl(${hue.toFixed(0)}, 62%, 58%)`;
+  }
 
   let hiddenItems = new Set();
   let tooltip = null;
 
+  let itemSortKey = 'value';   // 'value' | 'quantity'
+  let itemSortAsc = false;
+
   $: stackedBarChart = buildStackedBarChart(sessionDetail?.timeline ?? [], hiddenItems);
+  $: itemColorMap = Object.fromEntries((stackedBarChart?.topItems ?? []).map(i => [i.name, i.color]));
+  $: sortedItems = [...(sessionDetail?.items ?? [])].sort((a, b) => {
+    const diff = a[itemSortKey] - b[itemSortKey];
+    return itemSortAsc ? diff : -diff;
+  });
   $: maxItemValue = Math.max(...(sessionDetail?.items ?? []).map(i => i.value), 1);
 
   function buildStackedBarChart(timeline, hidden = new Set()) {
@@ -54,14 +63,12 @@
     const totalSilver = Object.values(itemTotals).reduce((s, v) => s + v, 0);
     if (totalSilver === 0) return null;
 
-    // Top 10 items by total silver (colors stay fixed regardless of visibility)
+    // All items by total silver — each gets a unique color
     const topItems = Object.entries(itemTotals)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([name, total], idx) => ({ name, total, color: CHART_COLORS[idx % CHART_COLORS.length] }));
+      .map(([name, total], idx) => ({ name, total, color: chartColor(idx) }));
 
-    const maxMin = Math.max(...Object.keys(buckets).map(Number));
-    const allMinutes = Array.from({ length: maxMin + 1 }, (_, i) => i);
+    const allMinutes = Object.keys(buckets).map(Number).sort((a, b) => a - b);
 
     // Y-scale based only on visible items
     const visibleItems = topItems.filter(i => !hidden.has(i.name));
@@ -93,10 +100,12 @@
       text: fmtSilver(maxBarTotal * f),
     }));
 
+    const lastMin = allMinutes[allMinutes.length - 1];
     const labelStep = Math.max(1, Math.ceil(allMinutes.length / 5));
     const xLabels = allMinutes
-      .filter(m => m % labelStep === 0 || m === maxMin)
-      .map(m => ({ x: m * barSlotW + barSlotW / 2, text: `${m}m` }));
+      .map((m, i) => ({ m, i }))
+      .filter(({ m }) => m % labelStep === 0 || m === lastMin)
+      .map(({ m, i }) => ({ x: i * barSlotW + barSlotW / 2, text: `${m}m` }));
 
     return { bars, barW, yLabels, xLabels, topItems };
   }
@@ -479,13 +488,27 @@
           {/if}
 
           <!-- Items breakdown -->
-          <div class="detail-section-label" style="margin-top: 24px;">Items Collected</div>
+          <div class="detail-items-header">
+            <div class="detail-section-label" style="margin: 0;">Items Collected</div>
+            <div class="detail-sort-controls">
+              <button
+                class="detail-sort-btn"
+                class:detail-sort-active={itemSortKey === 'quantity'}
+                on:click={() => { if (itemSortKey === 'quantity') itemSortAsc = !itemSortAsc; else { itemSortKey = 'quantity'; itemSortAsc = false; } }}
+              >Count {itemSortKey === 'quantity' ? (itemSortAsc ? '↑' : '↓') : ''}</button>
+              <button
+                class="detail-sort-btn"
+                class:detail-sort-active={itemSortKey === 'value'}
+                on:click={() => { if (itemSortKey === 'value') itemSortAsc = !itemSortAsc; else { itemSortKey = 'value'; itemSortAsc = false; } }}
+              >Silver {itemSortKey === 'value' ? (itemSortAsc ? '↑' : '↓') : ''}</button>
+            </div>
+          </div>
           <div class="detail-items">
-            {#each sessionDetail.items as item}
+            {#each sortedItems as item}
               <div class="detail-item-row">
                 <span class="detail-item-name" title={item.item_name}>{item.item_name}</span>
                 <div class="detail-item-bar-wrap">
-                  <div class="detail-item-bar" style="width: {(item.value / maxItemValue * 100).toFixed(1)}%"></div>
+                  <div class="detail-item-bar" style="width: {(item.value / maxItemValue * 100).toFixed(1)}%; background: {itemColorMap[item.item_name] ?? '#4a4460'}"></div>
                 </div>
                 <span class="detail-item-qty">×{item.quantity.toLocaleString()}</span>
                 <span class="detail-item-silver">{fmtSilver(item.value)}</span>
@@ -822,6 +845,14 @@
             />
             <span>Show Live OCR image</span>
           </label>
+          <label class="toggle-row">
+            <input
+              type="checkbox"
+              checked={state.show_live_metrics ?? true}
+              on:change={(e) => api('toggle_live_metrics', 'POST', { value: e.currentTarget.checked })}
+            />
+            <span>Show System Metrics in Live Log</span>
+          </label>
         </div>
 
         <div class="settings-group">
@@ -914,7 +945,10 @@
               bind:this={liveLogEl}
               on:scroll={onLiveLogScroll}
               style="font-size: {state.items_font_size ?? 12}px"
-            >{(state.show_ocr ? state.logs : state.logs.filter(l => !l.includes('[OCR]'))).join('\n')}</pre>
+            >{state.logs
+                .filter(l => state.show_ocr || !l.includes('[OCR]'))
+                .filter(l => (state.show_live_metrics ?? true) || !l.includes('[METRICS]'))
+                .join('\n')}</pre>
           </article>
 
           <!-- svelte-ignore a11y-no-static-element-interactions -->
