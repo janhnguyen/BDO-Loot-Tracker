@@ -8,6 +8,7 @@
     logs: [],
     totals: [],
     show_ocr: false,
+    show_live_metrics: true,
     sessions: ['No sessions'],
     selected_session: 'No sessions',
   };
@@ -844,6 +845,14 @@
             />
             <span>Show Live OCR image</span>
           </label>
+          <label class="toggle-row">
+            <input
+              type="checkbox"
+              checked={state.show_live_metrics ?? true}
+              on:change={(e) => api('toggle_live_metrics', 'POST', { value: e.currentTarget.checked })}
+            />
+            <span>Show System Metrics in Live Log</span>
+          </label>
         </div>
 
         <div class="settings-group">
@@ -936,7 +945,10 @@
               bind:this={liveLogEl}
               on:scroll={onLiveLogScroll}
               style="font-size: {state.items_font_size ?? 12}px"
-            >{(state.show_ocr ? state.logs : state.logs.filter(l => !l.includes('[OCR]'))).join('\n')}</pre>
+            >{state.logs
+                .filter(l => state.show_ocr || !l.includes('[OCR]'))
+                .filter(l => (state.show_live_metrics ?? true) || !l.includes('[METRICS]'))
+                .join('\n')}</pre>
           </article>
 
           <!-- svelte-ignore a11y-no-static-element-interactions -->

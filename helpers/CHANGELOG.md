@@ -1,5 +1,6 @@
-## v0.0.0 - ???
-- Bugfixing item parser
+## v0.7.0 - June 13th, 2026
+- Reworked tracking algorithm
+- Improved error log system
 - Fixed Arsha.io market price fetching
 - Session analytics improvements
 

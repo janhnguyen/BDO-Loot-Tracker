@@ -63,6 +63,25 @@ def log_caught_exception() -> None:
     _write_error_log(*sys.exc_info())
 
 
+def log_missed(line: str) -> None:
+    """
+    Append a missed/lost OCR entry to a rolling daily Missed_YYYY-MM-DD.log.
+    line is the already-formatted record, e.g. "THAN Crystal of Ruin x1 -> MISSED".
+    This makes every OCR input that never became a confirmed loot event searchable
+    in the existing logs directory. Best-effort: never raises into the OCR loop.
+    """
+    if _log_dir is None:
+        return
+    try:
+        _log_dir.mkdir(parents=True, exist_ok=True)
+        now = datetime.now()
+        filename = f"Missed_{now.strftime('%Y-%m-%d')}.log"
+        with (_log_dir / filename).open("a", encoding="utf-8") as f:
+            f.write(f"[{now.strftime('%H:%M:%S')}] {line}\n")
+    except OSError:
+        pass
+
+
 class SessionLogger:
     """Accumulates per-line OCR data for one tracking session and writes a log on finalize()."""
 

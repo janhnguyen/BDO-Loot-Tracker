@@ -8,13 +8,14 @@ from core.log_window import LogWindow
 from core.tracker import Tracker
 from core.tray import run_tray
 from core.local_store import LocalStore
-from core.app_logger import SessionLogger, setup_error_logger
+from core.app_logger import SessionLogger, setup_error_logger, log_missed
 from dotenv import load_dotenv
 from core.config import (
     LOCAL_DB_PATH,
     SHOW_OCR_LOG,
     SHOW_OCR_PANE,
     SHOW_LIVE_LOG,
+    SHOW_LIVE_METRICS,
     ITEMS_FONT_SIZE,
     KEYBIND_START,
     KEYBIND_PAUSE,
@@ -110,16 +111,33 @@ def main():
         log_window.add_ocr_frame(raw_img, processed_img)
 
     def handle_strip_result(pairs):
+        # Session log keeps the full raw -> cleaned record for every OCR line.
         if _session_logger is not None:
             _session_logger.add_ocr_lines(pairs)
+
+    def handle_missed(text):
+        # Any line that didn't become a
+        # confirmed event is written to the rolling Missed_*.log (error log) and
+        # shown in the live log, exactly as OCR read it.
+        log_missed(text)
         if log_window is not None:
-            for raw, cleaned in pairs:
-                if not cleaned:
-                    log_window._append_system(f"[MISS] {raw}")
+            log_window._append_system(text)
+
+    def handle_metrics(summary):
+        if log_window is not None:
+            log_window._append_system(summary)
+
+    def handle_diagnostics(diag):
+        # Surface only noteworthy frames (zero overlap / text-vs-scroll mismatch).
+        if log_window is not None and diag.is_noteworthy():
+            log_window._append_system(diag.summary())
 
     # Create the tracker
     tracker = Tracker(handle_event, handle_ocr, on_ocr_frame=handle_ocr_frame,
-                      on_strip_result=handle_strip_result)
+                      on_strip_result=handle_strip_result,
+                      on_diagnostics=handle_diagnostics,
+                      on_missed=handle_missed,
+                      on_metrics=handle_metrics)
 
     def start_session():
         nonlocal current_session_id, _session_logger
@@ -300,6 +318,7 @@ def main():
         open_log_dir_cb=open_log_dir,
         wipe_database_cb=wipe_database,
         show_live_log_default=SHOW_LIVE_LOG,
+        show_live_metrics_default=SHOW_LIVE_METRICS,
         keybind_start_default=KEYBIND_START,
         keybind_pause_default=KEYBIND_PAUSE,
         keybind_stop_default=KEYBIND_STOP,
