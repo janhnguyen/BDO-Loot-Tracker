@@ -126,18 +126,21 @@ pre {
 /* ── Shared scrollbar style ────────────────────────────────────────────────── */
 
 pre::-webkit-scrollbar,
-.sidebar-content::-webkit-scrollbar {
+.sidebar-content::-webkit-scrollbar,
+.detail-body::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 pre::-webkit-scrollbar-track,
-.sidebar-content::-webkit-scrollbar-track {
+.sidebar-content::-webkit-scrollbar-track,
+.detail-body::-webkit-scrollbar-track {
   background: transparent;
 }
 
 pre::-webkit-scrollbar-thumb,
-.sidebar-content::-webkit-scrollbar-thumb {
+.sidebar-content::-webkit-scrollbar-thumb,
+.detail-body::-webkit-scrollbar-thumb {
   background: transparent;
   border-radius: 10px;
   transition: background 0.4s ease;
@@ -145,17 +148,20 @@ pre::-webkit-scrollbar-thumb,
 
 pre:hover::-webkit-scrollbar-thumb,
 article:hover pre::-webkit-scrollbar-thumb,
-.sidebar:hover .sidebar-content::-webkit-scrollbar-thumb {
+.sidebar:hover .sidebar-content::-webkit-scrollbar-thumb,
+.detail-body:hover::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.16);
 }
 
 pre::-webkit-scrollbar-thumb:hover,
-.sidebar-content::-webkit-scrollbar-thumb:hover {
+.sidebar-content::-webkit-scrollbar-thumb:hover,
+.detail-body::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.32) !important;
 }
 
 pre::-webkit-scrollbar-corner,
-.sidebar-content::-webkit-scrollbar-corner {
+.sidebar-content::-webkit-scrollbar-corner,
+.detail-body::-webkit-scrollbar-corner {
   background: transparent;
 }
 

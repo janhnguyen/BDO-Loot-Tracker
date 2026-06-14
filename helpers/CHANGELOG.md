@@ -1,3 +1,7 @@
+## v0.7.1 - June 14th, 2026
+- Bugfixes
+- Small UI changes
+
 ## v0.7.0 - June 13th, 2026
 - Reworked tracking algorithm
 - Improved error log system

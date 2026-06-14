@@ -101,7 +101,10 @@ def normalize_frame(text: str, fuzzy_threshold: float = FUZZY_NAME_THRESHOLD) ->
     out: list[NormalizedLine] = []
     for raw in text.splitlines():
         raw = raw.strip()
-        if not raw or "[" not in raw:
+        # Require at least one bracket. Accept a line with only a closing ']' too:
+        # the opening '[' is often fused with the first glyph and misread (e.g.
+        # "[HAN ..." -> "THAN ..."), which would otherwise drop the whole line.
+        if not raw or ("[" not in raw and "]" not in raw):
             continue
         out.append(normalize_line(raw, fuzzy_threshold))
     return out

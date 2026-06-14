@@ -32,6 +32,7 @@ _COUNTERS = (
     "lost_unconfirmed",      # resolved slots that scrolled off before confirmation -> LOST
     "duplicate_suppressed",  # frames rejected by the implausible-jump guard
     "missed_overlap",        # populated frames that shared no overlap with the prior frame
+    "reseeds",               # baseline re-established after a persistent mismatch (emit nothing)
 )
 
 class _Latency:
@@ -109,7 +110,8 @@ class TrackerMetrics:
             f"missed={d['lines_missed']} (unknown={d['unknown_item']} "
             f"normfail={d['normalization_failed']} badqty={d['failed_qty']}) | "
             f"events ok={d['committed_events']} lost={d['lost_unconfirmed']} "
-            f"dup_suppressed={d['duplicate_suppressed']} no_overlap={d['missed_overlap']} | "
+            f"dup_suppressed={d['duplicate_suppressed']} no_overlap={d['missed_overlap']} "
+            f"reseeds={d['reseeds']} | "
             f"conf={d['align_conf_avg']:.2f} "
             f"ocr={d['ocr_ms_avg']:.0f}/{d['ocr_ms_max']:.0f}ms "
             f"frame={d['frame_ms_avg']:.0f}/{d['frame_ms_max']:.0f}ms "

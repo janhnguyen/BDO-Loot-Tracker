@@ -8,7 +8,7 @@
     logs: [],
     totals: [],
     show_ocr: false,
-    show_live_metrics: true,
+    show_system_messages: true,
     sessions: ['No sessions'],
     selected_session: 'No sessions',
   };
@@ -848,10 +848,10 @@
           <label class="toggle-row">
             <input
               type="checkbox"
-              checked={state.show_live_metrics ?? true}
-              on:change={(e) => api('toggle_live_metrics', 'POST', { value: e.currentTarget.checked })}
+              checked={state.show_system_messages ?? true}
+              on:change={(e) => api('toggle_system_messages', 'POST', { value: e.currentTarget.checked })}
             />
-            <span>Show System Metrics in Live Log</span>
+            <span>Show System Messages in Live Log</span>
           </label>
         </div>
 
@@ -947,7 +947,7 @@
               style="font-size: {state.items_font_size ?? 12}px"
             >{state.logs
                 .filter(l => state.show_ocr || !l.includes('[OCR]'))
-                .filter(l => (state.show_live_metrics ?? true) || !l.includes('[METRICS]'))
+                .filter(l => (state.show_system_messages ?? true) || !l.includes('[SYSTEM]'))
                 .join('\n')}</pre>
           </article>
 

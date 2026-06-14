@@ -8,7 +8,7 @@ from PIL import Image, ImageFilter
 
 from .parser import resolve_batch_zone_overrides
 from .normalize import normalize_frame
-from .alignment import align, is_glitch_frame, is_implausible_jump
+from .alignment import align, is_glitch_frame, is_implausible_jump, GLITCH_MAX_SKIPS
 from .fuzzy import MatchConfig
 from .staging import LootStager
 from .stability import StabilityGate, frame_difference
@@ -284,24 +284,32 @@ class Tracker:
         self._metrics.record_align((time.perf_counter() - align_t0) * 1000)
         self._metrics.record_confidence(result.confidence)
 
-        # Two anti-corruption guards (skippable; the coverage realign sets
-        # allow_skip=False because that realignment is deliberate):
-        #   1. zero overlap between two populated frames -> phantom/garbled line.
-        #   2. implausibly many "new" lines, unconfirmed by pixel scroll -> the
-        #      wall-of-identical-lines misalignment that re-emits a whole window
-        #      (the Zephyros duplicate). Skip and realign against the same baseline.
-        if allow_skip and is_glitch_frame(result, len(prev_lines), self._zero_overlap_skips):
-            self._zero_overlap_skips += 1
-            self._metrics.inc("frames_glitch_skip")
+        # Anti-corruption guards. A frame is "suspicious" when it shares no
+        # overlap with the baseline, or claims implausibly many new lines
+        # unconfirmed by pixel scroll (the wall-of-identical-lines misalignment).
+        # Such frames are skipped and realigned against the same baseline. If the
+        # mismatch PERSISTS past the skip budget e.g. the window sits static for
+        # a long time while the semi-transparent background bleeds through and
+        # jitters the OCR. The baseline is re-established and emits nothing, rather
+        # than dumping the whole window into the log as new loot. The coverage
+        # realign passes allow_skip=False because that realignment is deliberate.
+        zero_susp = is_glitch_frame(result, len(prev_lines), 0)
+        jump_susp = is_implausible_jump(result, 0, expected_new, MAX_PLAUSIBLE_NEW)
+        if allow_skip and (zero_susp or jump_susp):
+            if self._zero_overlap_skips < GLITCH_MAX_SKIPS:
+                self._zero_overlap_skips += 1
+                self._metrics.inc("frames_glitch_skip")
+                if jump_susp:
+                    self._metrics.inc("duplicate_suppressed")
+                self._emit_diagnostics(result, scroll, expected_new, len(current_lines), 0)
+                return False
+            # Mismatch persisted -> re-baseline (commit nothing). Prevents a
+            # static/jittery window from being re-counted as new loot.
+            self._stager.seed(current_lines)
+            self._zero_overlap_skips = 0
+            self._metrics.inc("reseeds")
             self._emit_diagnostics(result, scroll, expected_new, len(current_lines), 0)
-            return False
-        if allow_skip and is_implausible_jump(
-                result, self._zero_overlap_skips, expected_new, MAX_PLAUSIBLE_NEW):
-            self._zero_overlap_skips += 1
-            self._metrics.inc("frames_glitch_skip")
-            self._metrics.inc("duplicate_suppressed")
-            self._emit_diagnostics(result, scroll, expected_new, len(current_lines), 0)
-            return False
+            return True
         self._zero_overlap_skips = 0
         if result.zero_overlap:
             self._metrics.inc("missed_overlap")
