@@ -77,7 +77,7 @@ class LogWindow:
         open_log_dir_cb=None,
         wipe_database_cb=None,
         show_live_log_default: bool = False,
-        show_live_metrics_default: bool = True,
+        show_system_messages_default: bool = True,
         keybind_start_default: str = "Control+Shift+A",
         keybind_pause_default: str = "Control+Shift+S",
         keybind_stop_default: str = "Control+Shift+D",
@@ -107,7 +107,7 @@ class LogWindow:
         self._market_updating = False
 
         self.show_live_log = show_live_log_default
-        self.show_live_metrics = show_live_metrics_default
+        self.show_system_messages = show_system_messages_default
         self._keybind_start = keybind_start_default
         self._keybind_pause = keybind_pause_default
         self._keybind_stop = keybind_stop_default
@@ -184,6 +184,15 @@ class LogWindow:
         ts = datetime.now(timezone.utc).strftime("%H:%M:%S")
         with self._lock:
             self._logs.append(f"[{ts}] [SYSTEM] {text}")
+            self._logs = self._logs[-400:]
+
+    def add_missed(self, text: str):
+        """
+        Surface a missed/lost OCR line in the Live Log.
+        """
+        ts = datetime.now(timezone.utc).strftime("%H:%M:%S")
+        with self._lock:
+            self._logs.append(f"[{ts}] {text}")
             self._logs = self._logs[-400:]
 
     def _run_update_check(self):
@@ -349,7 +358,7 @@ class LogWindow:
                 "selected_session": self._selected_session,
                 "market_updating": self._market_updating,
                 "show_live_log": self.show_live_log,
-                "show_live_metrics": self.show_live_metrics,
+                "show_system_messages": self.show_system_messages,
                 "keybind_start": self._keybind_start,
                 "keybind_pause": self._keybind_pause,
                 "keybind_stop": self._keybind_stop,
@@ -400,9 +409,9 @@ class LogWindow:
         elif action == "toggle_live_log":
             self.show_live_log = bool(body.get("value", False))
             save_env_setting("SHOW_LIVE_LOG", self.show_live_log)
-        elif action == "toggle_live_metrics":
-            self.show_live_metrics = bool(body.get("value", False))
-            save_env_setting("SHOW_LIVE_METRICS", self.show_live_metrics)
+        elif action == "toggle_system_messages":
+            self.show_system_messages = bool(body.get("value", False))
+            save_env_setting("SHOW_SYSTEM_MESSAGES", self.show_system_messages)
         elif action == "set_character_name":
             name = "".join(c for c in str(body.get("value", "")) if c not in "\r\n\t").strip()
             if name:

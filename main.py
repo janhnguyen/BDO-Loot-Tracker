@@ -15,7 +15,7 @@ from core.config import (
     SHOW_OCR_LOG,
     SHOW_OCR_PANE,
     SHOW_LIVE_LOG,
-    SHOW_LIVE_METRICS,
+    SHOW_SYSTEM_MESSAGES,
     ITEMS_FONT_SIZE,
     KEYBIND_START,
     KEYBIND_PAUSE,
@@ -121,7 +121,7 @@ def main():
         # shown in the live log, exactly as OCR read it.
         log_missed(text)
         if log_window is not None:
-            log_window._append_system(text)
+            log_window.add_missed(text)
 
     def handle_metrics(summary):
         if log_window is not None:
@@ -318,7 +318,7 @@ def main():
         open_log_dir_cb=open_log_dir,
         wipe_database_cb=wipe_database,
         show_live_log_default=SHOW_LIVE_LOG,
-        show_live_metrics_default=SHOW_LIVE_METRICS,
+        show_system_messages_default=SHOW_SYSTEM_MESSAGES,
         keybind_start_default=KEYBIND_START,
         keybind_pause_default=KEYBIND_PAUSE,
         keybind_stop_default=KEYBIND_STOP,
