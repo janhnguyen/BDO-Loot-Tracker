@@ -231,7 +231,6 @@ class Tracker:
                 item_name=ev.item,
                 quantity=ev.qty,
                 zone=self._zone,
-                raw_text=ev.item,
                 character=CHARACTER_NAME,
             ))
         self._metrics.inc("committed_events", len(committed))

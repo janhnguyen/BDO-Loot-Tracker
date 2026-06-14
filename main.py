@@ -6,7 +6,6 @@ from pathlib import Path
 
 from core.log_window import LogWindow
 from core.tracker import Tracker
-from core.tray import run_tray
 from core.local_store import LocalStore
 from core.app_logger import SessionLogger, setup_error_logger, log_missed
 from dotenv import load_dotenv
@@ -325,19 +324,8 @@ def main():
         character_name_default=CHARACTER_NAME,
     )
 
-    # Run tray, passing tracker methods
-    tray_icon = run_tray(
-        start=start_session,
-        stop=stop_session,
-        set_zone=tracker.set_zone,
-        show_log=log_window.show,
-    )
-
-    # Run the UI loop
+    # Run the UI loop (closing the window exits the app)
     log_window.run()
-
-    # remove the tray icon too
-    tray_icon.stop()
 
 if __name__ == "__main__":
     if "--calibrate" in sys.argv:

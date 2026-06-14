@@ -53,7 +53,6 @@ class LogWindow:
 
     def __init__(
         self,
-        master=None,
         get_status_cb=None,
         start_cb=None,
         stop_cb=None,
@@ -575,18 +574,6 @@ class LogWindow:
                 return
 
         return Handler
-
-    def show(self):
-        if self._window is None:
-            return
-        # QTimer.singleShot is thread-safe — queues the call on the main event loop
-        QTimer.singleShot(0, self._bring_to_front)
-
-    def _bring_to_front(self):
-        if self._window:
-            self._window.showNormal()
-            self._window.raise_()
-            self._window.activateWindow()
 
     def run(self):
         self.refresh_sessions()

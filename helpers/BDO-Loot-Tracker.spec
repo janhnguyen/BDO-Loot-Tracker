@@ -31,9 +31,6 @@ a = Analysis(
         'tkinter.font',
         'tkinter.messagebox',
         '_tkinter',
-        # system tray
-        'pystray',
-        'pystray._win32',
         # screen capture
         'mss',
         'mss.windows',

@@ -27,16 +27,10 @@ class StabilityGate:
         self._min_stable_frames = max(1, min_stable_frames)
         self._prev: np.ndarray | None = None
         self._stable_run = 0
-        self._last_diff = float("inf")
 
     def reset(self) -> None:
         self._prev = None
         self._stable_run = 0
-        self._last_diff = float("inf")
-
-    @property
-    def last_diff(self) -> float:
-        return self._last_diff
 
     def update(self, gray: np.ndarray) -> bool:
         """Feed the latest grayscale frame; return True if the region is stable.
@@ -48,11 +42,9 @@ class StabilityGate:
         if self._prev is None:
             self._prev = gray
             self._stable_run = 0
-            self._last_diff = float("inf")
             return False
 
         diff = frame_difference(self._prev, gray)
-        self._last_diff = diff
         self._prev = gray
         if diff <= self._diff_threshold:
             self._stable_run += 1

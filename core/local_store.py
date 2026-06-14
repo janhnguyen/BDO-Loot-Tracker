@@ -495,11 +495,3 @@ class LocalStore:
         minutes = (total_seconds % 3600) // 60
         secs = total_seconds % 60
         return f"{hours:02d}:{minutes:02d}:{secs:02d}"
-
-    @staticmethod
-    def _parse_duration(value: str) -> float:
-        try:
-            hours, minutes, seconds = (int(part) for part in value.split(":", 2))
-            return float(hours * 3600 + minutes * 60 + seconds)
-        except (TypeError, ValueError):
-            return 0.0

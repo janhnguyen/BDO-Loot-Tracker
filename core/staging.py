@@ -101,7 +101,6 @@ class LootStager:
         self._slots: list[Slot] = []
         self._dropped_unconfirmed = 0  # slots that scrolled off before commit (total)
         self._lost_unconfirmed = 0     # ... of those, ones that HAD resolved to an item
-        self._missed_finalized = 0     # slots that hit the threshold but voted None
         # (best_raw, was_resolved) for slots dropped since the last drain — lets the
         # tracker surface every line that never became a confirmed event.
         self._dropped_records: list[tuple[str, bool]] = []
@@ -110,7 +109,6 @@ class LootStager:
         self._slots = []
         self._dropped_unconfirmed = 0
         self._lost_unconfirmed = 0
-        self._missed_finalized = 0
         self._dropped_records = []
 
     def seed(self, lines: list) -> None:
@@ -127,20 +125,12 @@ class LootStager:
         return sum(1 for s in self._slots if not s.committed)
 
     @property
-    def committed_count(self) -> int:
-        return sum(1 for s in self._slots if s.committed)
-
-    @property
     def dropped_unconfirmed(self) -> int:
         return self._dropped_unconfirmed
 
     @property
     def lost_unconfirmed(self) -> int:
         return self._lost_unconfirmed
-
-    @property
-    def missed_finalized(self) -> int:
-        return self._missed_finalized
 
     def drain_dropped(self) -> list[tuple[str, bool]]:
         """Return and clear the (raw, was_resolved) records of slots that scrolled
@@ -183,10 +173,6 @@ class LootStager:
                 slot.committed = True  # mark regardless, so an unknown slot isn't re-checked forever
                 if event is not None:
                     committed.append(event)
-                else:
-                    # Confirmed as persistent, but never resolved to a known item.
-                    self._missed_finalized += 1
-                    self._dropped_records.append((slot.best_raw(), False))
         return committed
 
     def flush(self) -> list[CommittedEvent]:

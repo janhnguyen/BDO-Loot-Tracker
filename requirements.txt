@@ -9,7 +9,6 @@
 mss>=9.0.1          # fast cross-platform screen capture
 Pillow>=10.0.0      # image processing
 numpy>=1.26         # vectorised OCR preprocessing + scroll/stability detection
-pystray>=0.19.5     # system tray icon
 requests>=2.31.0    # HTTP requests (market prices, update checker)
 pytesseract>=0.3.10 # Tesseract OCR bindings
 python-dotenv>=1.0.1 # load local .env configuration

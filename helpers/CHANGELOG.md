@@ -1,3 +1,6 @@
+## v?.?.? - ???
+- Remove tray icon
+
 ## v0.7.1 - June 14th, 2026
 - Bugfixes
 - Small UI changes
